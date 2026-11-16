@@ -1,0 +1,52 @@
+# Modelo e metodologia do BLU-ROTAS 2.0
+
+## Rede e representação
+
+A fonte inicial é o recorte OpenStreetMap de Blumenau em `data/blumenau-centro.osm.xml`, acompanhado por `blumenau.net.xml`. O `netconvert` do SUMO converte vias, sentidos, faixas, cruzamentos e semáforos. O grafo usado pelo GPS tem como **vértices** os IDs das arestas SUMO onde automóveis são permitidos; uma **aresta do grafo** une dois desses trechos quando existe uma conexão dirigida legal entre suas faixas. Pontos de acesso salvos são vértices virtuais adicionais (`access:<id>`), ligados à via por pesos proporcionais ao comprimento antes e depois do ponto. Eles participam do grafo inspecionável e de seu algoritmo de caminhos; os veículos físicos continuam roteados apenas por arestas SUMO. O peso básico é comprimento / velocidade permitida. O Dijkstra percorre a lista de adjacência com fila de prioridade. A vista de grafo permite examinar graus, conexões, componentes e caminho mínimo; IDs e pesos só aparecem com zoom próximo.
+
+As ruas base são desenhadas continuamente a partir das geometrias OSM; a seleção e os bloqueios recaem no trecho SUMO dirigido real. Setas mostram o sentido permitido pelo grafo. `backend/graph_view.py` exporta exatamente a topologia usada no cálculo. Bairros são aproximados pelos pontos `place` do OSM disponível, sem polígonos administrativos.
+
+## Motor e GPS
+
+`backend/engine.py` é o controlador físico TraCI do SUMO. Cada passo avança **0,25 s simulados**. O WebSocket transmite snapshots; o MapLibre interpola só a apresentação entre posições reais consecutivas. O GPS dinâmico avalia rotas no intervalo configurado por carro. O custo atual de uma via combina comprimento, limite aplicável e velocidades observadas dos automóveis na via; vias bloqueadas têm custo infinito. `backend/route_choices.py` calcula alternativas sobre esse mesmo grafo penalizando partes do melhor caminho e validando os desvios dirigíveis. Mostra até três caminhos distintos: melhor, secundário e mais demorado entre os encontrados com custo máximo de três vezes o melhor ou mais 90 segundos. A escolha manual de um carro ativo aplica `traci.vehicle.setRoute` e põe seu GPS em modo estático até nova configuração. Grupos de carros recebem o mesmo horário de partida, embora a inserção física dependa do espaço disponível. A troca automática precisa respeitar a conectividade e a economia mínima configurada. O GPS estático mantém a rota inicial, salvo uma intervenção que torne o caminho inviável. A previsão de chegada é recalculada a cada 5 s simulados a partir do restante da rota, custos atuais e relógio simulado. A chegada real e o erro da previsão são registrados separadamente. Semáforos não recebem uma penalização futura estimada explicitamente; seu atraso aparece quando a velocidade observada cai.
+
+O relógio começa no horário escolhido e avança pelo tempo físico simulado. O loop de demanda cria veículos de forma sintética, com multiplicador nos intervalos 07:00–09:00 e 17:00–19:00. Esses horários e taxas são hipóteses de cenário, não contagens medidas em Blumenau.
+
+O clima modifica parâmetros físicos dos veículos no SUMO: sol (fator de velocidade 1, `tau` 1, aceleração 2,6 m/s², desaceleração 4,5 m/s²), chuva fraca (0,85; 1,4; 2,1; 3,7) e chuva intensa (0,65; 1,9; 1,6; 3,0). Os modificadores são valores experimentais, não medições meteorológicas locais.
+
+## Editor urbano e mapas
+
+`backend/urban.py` guarda pontos de acesso projetados sobre uma faixa/trecho SUMO. Eles servem de origem ou destino, **sem fingir que criam um cruzamento físico**. Ao mudar de cenário, são associados de novo à malha ativa da mesma cidade. O editor em `backend/scenario_network.py` projeta dois extremos sobre vias OSM, insere nós nos segmentos e permite até 12 pontos intermediários para a geometria da nova via. Ele altera tags OSM de mão, faixas e velocidade para uma rua mapeada inteira, ou insere `highway=traffic_signals` num cruzamento físico. Todas essas operações ocorrem numa cópia do XML e chamam `netconvert`. Antes de ativar, valida que a via, as faixas, o sentido e o semáforo pedidos existem na rede SUMO e que a conexão fictícia é dirigível. Capacidade estimada e custo financeiro são metadados hipotéticos. Um cruzamento visual da linha fictícia com outra rua não cria uma interseção automaticamente; as extremidades devem se ligar a vias existentes. Ativar, editar ou remover um elemento reconstrói a rede e reinicia a simulação em pausa, pois TraCI não pode acrescentar topologia viária ao processo SUMO em curso. O OSM original não é sobrescrito.
+
+`backend/map_manager.py` importa arquivos locais `.osm`/`.osm.xml`, opcionalmente com filtro por limites. Cada importação recebe pasta própria em `data/cities/<id>` com fonte, GeoJSON, rede SUMO e manifesto. A cidade original permanece selecionável. A importação de Blumenau inteira depende de um arquivo OSM apropriado fornecido pelo usuário e dos recursos do computador; nenhum dado municipal completo é incluído no pacote. O modo de recorte mantém as vias que tocam os limites e os nós necessários dessas vias, de modo que o limite efetivo da malha pode exceder um pouco a caixa escolhida.
+
+## Laboratório científico
+
+`backend/experiments.py` cria um manifesto com semente, versões da rede e do código, parâmetros, demandas, horários, pares origem/destino e variantes. A demanda é gerada uma vez por repetição e reutilizada em todas as variantes do mesmo experimento. A regra de amostragem limita o tempo livre estimado da viagem a 70% do intervalo após a janela de partidas, dando oportunidade de conclusão sem eliminar viagens que atrasarem. A semente controla a amostragem; o SUMO usa a mesma semente em variantes pareadas. Repetir copia exatamente a demanda registrada e recusa a operação se a versão da rede fonte mudou.
+
+`scripts/experiment_worker.py` executa cada variante em um processo SUMO isolado. O modo **rápido** dispensa a espera entre passos e o modo **visual** sincroniza o tempo simulado com o relógio real. Ambos usam o mesmo passo de 0,25 s e a mesma lógica do motor. Snapshots NDJSON gravados durante os passos físicos alimentam o replay; cada linha contém tempo, posições, sinais e indicadores observados. O replay não simula resultados novos.
+
+Experimentos prontos: A GPS estático/dinâmico; B duração de uma fase semafórica; C demanda crescente; D bloqueio total/parcial ou redução de velocidade; E rede original versus conexão fictícia já construída; F sol/chuvas. O experimento personalizado aceita de duas a oito variantes. O caso E só roda após a rede fictícia existir e ter sido validada pelo SUMO. Até 25% das viagens do caso E são amostradas perto da nova ligação quando seus pares origem/destino têm rota livre que pode usá-la. Essa seleção é idêntica nos dois cenários e a quantidade efetiva fica no manifesto; se não houver pares válidos, a demanda aleatória é preservada. O caso B altera duração de fase, preservando seus estados e os conflitos válidos da programação original. O paradoxo de Braess não é pressuposto: se a rede ensaiada não o apresentar, os resultados simplesmente o mostrarão.
+
+`backend/experiment_analysis.py` contabiliza todas as demandas, inclusive viagens sem partida ou sem conclusão. Tempo médio, mediana, p95 e desvio-padrão de **viagem completa** usam apenas concluídas e ficam indefinidos quando nenhuma termina; a taxa de conclusão e os registros individuais expõem o restante. Espera, distância, filas, ocupação e velocidade por via usam amostras reais do SUMO. As rotas inicial e final, mudanças de rota e distribuição dos caminhos ficam registradas; o experimento E contabiliza quantos veículos receberam rota pela conexão fictícia. Intervalo de confiança bilateral de 95% usa médias das repetições quando há pelo menos duas; com amostra pequena, usa valor crítico t de Student. O comparador A/B identifica condições pareadas e diferenças de parâmetros, além das vias com maiores mudanças de fila quando a malha é igual; não atribui causalidade quando a demanda difere ou várias variáveis mudam juntas. A interpretação automática descreve apenas tendências calculadas, incluindo o trecho de maior crescimento observado no experimento C. Resultados descrevem o modelo, não o trânsito real.
+
+CSV de resumo, veículos e vias, JSON completo e PDF descritivo são gerados em `backend/experiment_report.py`. O PDF inclui hipótese, parâmetros, versões, números, gráfico simples, limitações e espaço para a interpretação dos alunos. Não há conclusão científica pré-escrita para favorecer hipótese alguma.
+
+## Reprodução e testes
+
+1. Inicie o aplicativo conforme o [README](../README.md), abra **Modo Ciência** e escolha um preset.
+2. Defina veículos, repetições, semente, duração e janela de partidas. Para comparar variantes, use o mesmo experimento, pois a demanda é pareada por construção.
+3. Execute em modo rápido. Abra uma execução para examinar métricas e replay; exporte JSON para preservar o manifesto completo.
+4. Use **Repetir idêntico** para criar outra execução com demanda e parâmetros iguais. Se a malha fonte tiver sido substituída, a repetição será rejeitada.
+5. Para um A/B entre experimentos distintos, confira o aviso de comparabilidade e as diferenças listadas.
+
+Os testes automatizados cobrem grafo, GPS, SUMO, interdições, semáforos, construção de conexão dirigível, importação OSM, demanda determinística, indicadores, comparação e exportação. Rode `python -m pytest -q` com `SUMO_BINARY` configurado e `npm run build` no frontend. Uma única repetição não sustenta intervalo de confiança.
+
+## Fontes e limites
+
+- Dados viários: [OpenStreetMap contributors, licença ODbL](https://www.openstreetmap.org/copyright), com recorte incluído no projeto.
+- Motor físico e netconvert: [Eclipse SUMO](https://eclipse.dev/sumo/).
+- A metodologia acadêmica original do projeto está em [metodo.md](metodo.md); esta expansão preserva o uso de grafos e a distinção entre dado real e cenário sintético.
+- A rede OSM pode conter erros de sentido, conexão ou sinalização. Importar outra cidade não calibra demanda, semáforos nem comportamento de motoristas a medições locais.
+- Custos financeiros e capacidades declaradas no editor são hipóteses; a capacidade física efetiva emerge das faixas, comprimentos e parâmetros do SUMO.
+- Experimentos grandes, principalmente muitas variantes, repetições e 500 carros, podem consumir tempo, memória e espaço de disco significativos. O resultado não é suavizado ou truncado para parecer rápido.

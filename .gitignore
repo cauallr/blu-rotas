@@ -1,0 +1,15 @@
+.venv/
+frontend/node_modules/
+*.sqlite3
+data/cities/
+data/experiments/
+data/scenarios/
+__pycache__/
+.pytest_cache/
+.pytest-tmp/
+.testtmp/
+*.pyc
+.env
+.env.*
+!.env.example
+*.zip
