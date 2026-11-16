@@ -97,6 +97,7 @@ class ScenarioNetwork:
             bounds = (min(longitudes) - .005, min(latitudes) - .005,
                       max(longitudes) + .005, max(latitudes) + .005)
             ways = {way.attrib["id"]: way for way in root.findall("way")}
+            base_roads = json.loads((self.base_dir / "roads.geojson").read_text(encoding="utf-8"))
             for edit in road_edits:
                 way = ways.get(str(edit["way_id"]))
                 if way is None:
@@ -115,11 +116,15 @@ class ScenarioNetwork:
                 _tag(way, "lanes:forward", str(forward) if direction == "both" else None)
                 _tag(way, "lanes:backward", str(backward) if direction == "both" else None)
                 _tag(way, "maxspeed", str(edit["speed_kmh"]))
+                if edit.get("name"):
+                    _tag(way, "name", edit["name"].strip())
+                    for feature in base_roads["features"]:
+                        if str(feature["properties"].get("id")) == str(edit["way_id"]):
+                            feature["properties"]["name"] = edit["name"].strip()
             insertions: dict[str, list[tuple[int, float, str]]] = {}
             new_nodes: list[ET.Element] = []
             new_ways: list[ET.Element] = []
             normalized = []
-            base_roads = json.loads((self.base_dir / "roads.geojson").read_text(encoding="utf-8"))
             for ordinal, spec in enumerate(roads):
                 if spec["origin_way"] not in ways or spec["destination_way"] not in ways:
                     raise ValueError("A rua fictícia deve ligar dois trechos presentes no OSM original")
@@ -223,6 +228,7 @@ class ScenarioNetwork:
             net_path = output_dir / "network.net.xml"
             tree.write(osm_path, encoding="utf-8", xml_declaration=True)
             command = [self.netconvert, "--osm-files", str(osm_path), "--output-file", str(net_path),
+                       "--output.street-names", "true",
                        "--geometry.remove", "--ramps.guess", "true", "--junctions.join", "true",
                        "--tls.guess", "true", "--tls.default-type", "static",
                        "--remove-edges.isolated", "true", "--no-turnarounds", "true"]

@@ -83,7 +83,7 @@ def test_edited_lanes_direction_and_signal_reach_sumo(tmp_path):
     way_id = "1010048512"
     signal_point = [-49.0597191, -26.9136574]
     manifest = builder.build([], "Rede editada", [{"way_id": way_id, "direction": "both",
-        "lanes_forward": 2, "lanes_backward": 1, "speed_kmh": 35}],
+        "lanes_forward": 2, "lanes_backward": 1, "speed_kmh": 35, "name": "Rua do Estudo"}],
         [{"coordinates": signal_point}])
     net = sumolib.net.readNet(str(tmp_path / "scenarios" / manifest["id"] / "network.net.xml"))
     directions = {direction: [edge for edge in net.getEdges()
@@ -91,5 +91,9 @@ def test_edited_lanes_direction_and_signal_reach_sumo(tmp_path):
         for direction, reverse in (("forward", False), ("backward", True))}
     assert directions["forward"] and directions["backward"]
     assert max(len(edge.getLanes()) for edge in directions["forward"]) >= 2
+    assert all(edge.getName() == "Rua do Estudo" for edge in directions["forward"])
+    mapped = json.loads((tmp_path / "scenarios" / manifest["id"] / "roads.geojson").read_text(encoding="utf-8"))
+    assert all(feature["properties"]["name"] == "Rua do Estudo" for feature in mapped["features"]
+               if str(feature["properties"]["id"]) == way_id)
     assert any(node.getType() == "traffic_light" for node in net.getNodes())
     assert manifest["signals"][0]["node_id"]

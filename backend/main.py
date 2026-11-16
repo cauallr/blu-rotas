@@ -57,6 +57,14 @@ def home():
     return FileResponse(DIST / "index.html")
 
 
+@app.get("/tutorial_de_situações.html")
+def situations_tutorial():
+    tutorial = DIST / "tutorial_de_situações.html"
+    if not tutorial.is_file():
+        raise HTTPException(status_code=404, detail="Compile o frontend com npm run build")
+    return FileResponse(tutorial, media_type="text/html; charset=utf-8")
+
+
 class StartBody(BaseModel):
     seed: int = 42
     start_hour: float = Field(6, ge=0, lt=24)
@@ -185,6 +193,7 @@ class NewRoadBody(BaseModel):
 
 class RoadEditBody(BaseModel):
     edge_id: str
+    name: str | None = Field(default=None, min_length=1, max_length=100)
     direction: Literal["both", "selected", "opposite"]
     lanes_selected: int = Field(1, ge=1, le=4)
     lanes_opposite: int = Field(1, ge=1, le=4)
@@ -735,7 +744,8 @@ async def edit_urban_road(body: RoadEditBody):
             forward = selected_count if selected_forward else opposite_count
             backward = opposite_count if selected_forward else selected_count
             edit = {"way_id": way_id, "direction": direction, "lanes_forward": forward,
-                    "lanes_backward": backward, "speed_kmh": body.speed_kmh}
+                    "lanes_backward": backward, "speed_kmh": body.speed_kmh,
+                    "name": body.name.strip() if body.name else None}
             current = URBAN.get(SIM.network_scenario_id) if SIM.network_scenario_id else {}
             previous = [item for item in current.get("road_edits", []) if item["way_id"] != way_id]
             manifest = await asyncio.to_thread(URBAN.build, current.get("roads", []), body.scenario_name,

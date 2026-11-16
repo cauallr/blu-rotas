@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Activity, CarFront, Clock3, CloudRain, CloudSun, GitBranch, MapPin, MousePointer2, Pause, Play, Plus, RotateCcw, Route, Signal, SlidersHorizontal, TrafficCone, Zap } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Activity, CarFront, Clock3, CloudRain, CloudSun, GitBranch, MapPin, MousePointer2, Pause, Play, Plus, RotateCcw, Route, Signal, SlidersHorizontal, TrafficCone, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import CityMap, { type MapPoint } from './CityMap';
+import HelpTip from './HelpTip';
 import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Road, RouteOption, Selection, Snapshot } from './types';
 
 type Act = (path: string, body?: object, reload?: boolean) => Promise<Snapshot | Record<string, unknown> | null>;
@@ -47,6 +48,7 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
   const [carGpsBenefit, setCarGpsBenefit] = useState(12);
   const [spawnCount, setSpawnCount] = useState(10);
   const [roadSpeed, setRoadSpeed] = useState(20);
+  const [editName, setEditName] = useState('');
   const [editDirection, setEditDirection] = useState<'both' | 'selected' | 'opposite'>('both');
   const [editLanesSelected, setEditLanesSelected] = useState(1);
   const [editLanesOpposite, setEditLanesOpposite] = useState(1);
@@ -62,6 +64,9 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
   const [showRoute, setShowRoute] = useState(true);
   const [showPreviousRoute, setShowPreviousRoute] = useState(false);
   const [followVehicle, setFollowVehicle] = useState(false);
+  const [panelMode, setPanelMode] = useState<'wide' | 'compact' | 'hidden'>('wide');
+  const [routePulse, setRoutePulse] = useState<{ vehicleId: string; count: number } | null>(null);
+  const lastRoute = useRef<{ vehicleId: string; count: number } | null>(null);
   const [graphOverlay, setGraphOverlay] = useState<GraphOverlay | null>(null);
   const [graphShowVertices, setGraphShowVertices] = useState(true);
   const [graphShowArcs, setGraphShowArcs] = useState(false);
@@ -154,7 +159,23 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
     setEditLanesSelected(roadSelection.lanes || 1);
     setEditLanesOpposite(Number(opposite?.properties?.lanes) || 1);
     setEditSpeed(Math.round(roadSelection.speed_kmh || 40));
+    setEditName(roadSelection.name === 'Via sem nome' ? '' : roadSelection.name || '');
   }, [roadSelection?.id, network]);
+  useEffect(() => {
+    const vehicle = selected?.kind === 'vehicle' ? selected.value : null;
+    if (!vehicle) { lastRoute.current = null; setRoutePulse(null); return; }
+    const previous = lastRoute.current;
+    if (previous?.vehicleId === vehicle.id && vehicle.reroutes > previous.count) {
+      setRoutePulse({ vehicleId: vehicle.id, count: vehicle.reroutes });
+      setShowPreviousRoute(true);
+    }
+    lastRoute.current = { vehicleId: vehicle.id, count: vehicle.reroutes };
+  }, [selected?.kind === 'vehicle' ? selected.value.id : null, selected?.kind === 'vehicle' ? selected.value.reroutes : null]);
+  useEffect(() => {
+    if (!routePulse) return;
+    const timer = window.setTimeout(() => setRoutePulse(null), 5500);
+    return () => window.clearTimeout(timer);
+  }, [routePulse]);
   useEffect(() => {
     if (tool === 'maps') fetch('/api/maps').then(response => response.json()).then(setCityMaps).catch(error => setNotice(error.message));
   }, [tool, snapshot?.city_id, setNotice]);
@@ -364,14 +385,23 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
     { key: 'loop', label: 'Loop diário', icon: RotateCcw, hint: 'Ative carros contínuos e ajuste os horários de pico.' }
   ];
   const currentTool = tools.find(item => item.key === tool) || tools[0];
+  const toolGroups = [
+    { label: 'Explorar', icon: MousePointer2, keys: ['select'], start: 'select' },
+    { label: 'Carros e GPS', icon: CarFront, keys: ['car', 'vehicle', 'gps'], start: 'car' },
+    { label: 'Ruas e grafo', icon: TrafficCone, keys: ['road', 'build', 'point', 'graph'], start: 'road' },
+    { label: 'Semáforos', icon: Signal, keys: ['light', 'new_signal'], start: 'light' },
+    { label: 'Cidade', icon: Clock3, keys: ['maps', 'weather', 'clock', 'loop'], start: 'clock' }
+  ];
+  const currentGroup = toolGroups.find(group => group.keys.includes(tool)) || toolGroups[0];
   const roadLabels = useMemo(() => new Map(network.features.map(feature =>
     [String(feature.properties?.id), String(feature.properties?.name || 'Via sem nome')])), [network]);
 
-  return <main className="city-layout">
+  return <main className={`city-layout panel-${panelMode}`}>
     <section className="map-frame">
       <CityMap network={network} baseRoads={baseRoads} places={places} snapshot={snapshot} selection={selected}
         selectedRoadId={tool === 'road' ? roadSelection?.id || null : selected?.kind === 'road' ? selected.value.id : null}
         tool={tool} theme={theme} showRoute={showRoute} showPreviousRoute={showPreviousRoute}
+        routePulseToken={routePulse ? `${routePulse.vehicleId}-${routePulse.count}` : null}
         followVehicleId={followVehicle && selected?.kind === 'vehicle' ? selected.value.id : null}
         onStopFollow={() => setFollowVehicle(false)} customPoints={tool === 'car' ? points : []}
         previewRoute={tool === 'car' ? previewRoute : tool === 'vehicle' ? vehicleRouteOptions.find(option => option.key === vehiclePreviewChoice)?.route || [] : []}
@@ -391,21 +421,25 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
         <span className="legend slow" /> Lento <span className="legend moderate" /> Moderado <span className="legend free" /> Livre
         <span className="legend blocked-road" /> Via interditada</div></div>
       <div className="map-tip"><strong>{currentTool.label}</strong><span>{currentTool.hint}</span></div>
+      <div className="panel-map-controls"><button title={panelMode === 'hidden' ? 'Mostrar painel' : 'Ocultar painel'} onClick={() => setPanelMode(panelMode === 'hidden' ? 'wide' : 'hidden')}>{panelMode === 'hidden' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}<span>{panelMode === 'hidden' ? 'Mostrar painel' : 'Ocultar painel'}</span></button>
+        {panelMode !== 'hidden' && <button title={panelMode === 'compact' ? 'Ampliar painel' : 'Diminuir painel'} onClick={() => setPanelMode(panelMode === 'compact' ? 'wide' : 'compact')}><SlidersHorizontal size={17} /><span>{panelMode === 'compact' ? 'Ampliar' : 'Diminuir'}</span></button>}</div>
       <div className="map-bottom-right">© OpenStreetMap contributors • ODbL</div>
-      <div className="tool-tray" aria-label="Ferramentas do mapa">{tools.map(item => <button key={item.key}
-        className={tool === item.key ? 'active' : ''} title={item.label} onClick={() => chooseTool(item.key)}>
-        <item.icon size={18} /><span>{item.label}</span></button>)}</div>
+      <div className="tool-tray" aria-label="Ferramentas do mapa">{toolGroups.map(group => <button key={group.label}
+        className={currentGroup.label === group.label ? 'active' : ''} title={group.label} onClick={() => chooseTool(group.start)}>
+        <group.icon size={18} /><span>{group.label}</span></button>)}</div>
     </section>
     <aside className="panel"><div className="panel-header"><div><div className="eyebrow">FERRAMENTA ATIVA</div><h2>{currentTool.label}</h2></div>
       <span className="panel-header-icon"><currentTool.icon size={19} /></span></div>
       <div className="tool-instruction">{currentTool.hint}</div>
+      {currentGroup.keys.length > 1 && <nav className="subtool-nav" aria-label={`Ferramentas de ${currentGroup.label}`}>
+        {currentGroup.keys.map(key => { const item = tools.find(candidate => candidate.key === key)!; return <button key={key} className={tool === key ? 'active' : ''} onClick={() => chooseTool(key)}><item.icon size={15} />{item.label}</button>; })}</nav>}
       <div className="panel-scroll">
         {tool === 'select' && <section className="panel-section"><h3>Escolha uma ferramenta</h3>
           <p className="panel-copy">Os botões à esquerda ativam ações diferentes no mapa. A simulação precisa estar iniciada para criar carros ou editar o trânsito.</p>
           <div className="overview-grid"><div><strong>{snapshot?.active || 0}</strong><span>carros ativos</span></div><div><strong>{snapshot?.lights?.length || 0}</strong><span>semáforos</span></div><div><strong>{snapshot?.reroutes || 0}</strong><span>mudanças de rota</span></div></div>
           <button className="primary-button wide" onClick={() => chooseTool('car')}><Plus size={16} /> Criar carro personalizado</button></section>}
 
-        {tool === 'car' && <><section className="panel-section"><div className="section-heading"><span><MapPin size={17} /> Viagem personalizada</span></div>
+        {tool === 'car' && <><section className="panel-section"><div className="section-heading"><span><MapPin size={17} /> Viagem personalizada</span><HelpTip title="Criar viagens">Escolha origem e destino no mapa, compare as três rotas e informe quantos carros seguirão cada uma. Inicie a simulação antes de lançar os grupos.</HelpTip></div>
           <div className="step-list"><button className={pick === 'origin' ? 'current' : ''} onClick={() => setPick('origin')}><b>A</b><span>{origin ? origin.name : 'Definir origem no mapa'}</span></button>
             {waypoints.map((point, index) => <div key={`${point.edge_id}-${index}`} className="waypoint-row"><b>{index + 1}</b><span>{point.name}</span><button onClick={() => setWaypoints(items => items.filter((_, i) => i !== index))}>×</button></div>)}
             <button className={pick === 'waypoint' ? 'current' : ''} onClick={() => setPick('waypoint')}><b>+</b><span>Adicionar ponto de passagem</span></button>
@@ -479,13 +513,15 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
             <div className="field"><label>Reduzir velocidade para {roadSpeed} km/h</label><input type="range" min="5" max="60" value={roadSpeed} onChange={event => setRoadSpeed(Number(event.target.value))} /></div>
             <div className="button-grid"><button className="danger-button" disabled={!active || busy} onClick={() => act('/road', { edge_id: roadSelection.id, action: 'close' })}>Interditar trecho</button>{(roadSelection.lanes || 1) > 1 && <button disabled={!active || busy} onClick={() => act('/road', { edge_id: roadSelection.id, action: 'partial' })}>Fechar uma faixa</button>}<button disabled={!active || busy} onClick={() => act('/road', { edge_id: roadSelection.id, action: 'slow', speed_kmh: roadSpeed })}>Reduzir limite</button><button disabled={!active || busy} onClick={() => act('/road', { edge_id: roadSelection.id, action: 'restore' })}>Restaurar trecho</button></div>
             <p className="panel-copy">A rua é desenhada contínua. A interdição afeta somente o trecho selecionado e o sentido correspondente no SUMO.</p>
-            <div className="section-heading"><span><SlidersHorizontal size={17} /> Editar rua no cenário</span></div>
+            <div className="section-heading"><span><SlidersHorizontal size={17} /> Editar rua no cenário</span><HelpTip title="Edição da malha">O nome, o sentido, as faixas e a velocidade são gravados numa cópia do OSM. O SUMO reconstrói a rede e reinicia os carros. Para uma interdição temporária, use os botões acima.</HelpTip></div>
             <p className="panel-copy">A edição física aplica sentido, faixas e limite de velocidade à rua OSM inteira que contém este trecho. Reconstruir reinicia a simulação.</p>
+            <div className="field"><label>Nome no cenário (opcional)</label><input value={editName} maxLength={100} placeholder="Ex.: Rua das Flores" onChange={event => setEditName(event.target.value)} /></div>
             <div className="field"><label>Mão da rua</label><select value={editDirection} onChange={event => setEditDirection(event.target.value as typeof editDirection)}><option value="both">Mão dupla</option><option value="selected">Somente no sentido selecionado</option><option value="opposite">Somente no sentido oposto</option></select></div>
             {editDirection !== 'opposite' && <div className="field"><label>Faixas no sentido selecionado</label><select value={editLanesSelected} onChange={event => setEditLanesSelected(Number(event.target.value))}>{[1,2,3,4].map(value => <option key={value} value={value}>{value}</option>)}</select></div>}
             {editDirection !== 'selected' && <div className="field"><label>Faixas no sentido oposto</label><select value={editLanesOpposite} onChange={event => setEditLanesOpposite(Number(event.target.value))}>{[1,2,3,4].map(value => <option key={value} value={value}>{value}</option>)}</select></div>}
             <div className="field"><label>Limite físico: {editSpeed} km/h</label><input type="range" min="5" max="80" step="5" value={editSpeed} onChange={event => setEditSpeed(Number(event.target.value))} /></div>
-            <button className="primary-button wide" disabled={building} onClick={() => urbanAction('/urban/road-edit', 'POST', { edge_id: roadSelection.id, direction: editDirection, lanes_selected: editLanesSelected, lanes_opposite: editLanesOpposite, speed_kmh: editSpeed })}>{building ? 'Reconstruindo…' : 'Aplicar edição e reiniciar'}</button>
+            <button className="primary-button wide" disabled={building} onClick={() => urbanAction('/urban/road-edit', 'POST', { edge_id: roadSelection.id, name: editName.trim() || null, direction: editDirection, lanes_selected: editLanesSelected, lanes_opposite: editLanesOpposite, speed_kmh: editSpeed })}>{building ? 'Reconstruindo…' : 'Aplicar edição e reiniciar'}</button>
+            <p className="micro-note">Nomes atribuídos aqui são hipóteses do cenário local; a fonte OpenStreetMap original não é alterada.</p>
             {urbanNetworks?.scenarios.find(item => item.id === urbanNetworks.active)?.road_edits?.some(item => roadSelection.id.includes(item.way_id)) && <button className="wide" disabled={building} onClick={() => { const item = urbanNetworks.scenarios.find(scenario => scenario.id === urbanNetworks.active)?.road_edits?.find(edit => roadSelection.id.includes(edit.way_id)); if (item) urbanAction(`/urban/road-edit/${item.way_id}`, 'DELETE'); }}>Restaurar configuração OSM</button>}</> : <p className="panel-copy">Clique na rua. A área de seleção é maior que a linha desenhada, e trechos próximos aparecem na lista.</p>}</section></>}
 
         {tool === 'graph' && <section className="panel-section"><div className="section-heading"><span><GitBranch size={17} /> Grafo de roteamento</span></div>
@@ -501,7 +537,7 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
           <div className="graph-path-control"><span>Origem: {graphStart || 'clique num vértice'}</span><span>Destino: {graphEnd || 'clique em outro vértice'}</span><button className="primary-button wide" disabled={!graphStart || !graphEnd} onClick={calculateGraphPath}>Destacar caminho mínimo</button>{graphPath.length > 0 && <span>{graphPath.length} trechos no caminho</span>}</div>
           <p className="micro-note">IDs e pesos aparecem a partir do zoom 17. Em zoom distante, os detalhes são ocultados para preservar a fluidez.</p></section>}
 
-        {tool === 'point' && <section className="panel-section"><div className="section-heading"><span><MapPin size={17} /> Pontos de acesso</span></div>
+        {tool === 'point' && <section className="panel-section"><div className="section-heading"><span><MapPin size={17} /> Pontos de acesso</span><HelpTip title="Ponto ou cruzamento?">Este ponto vira vértice do grafo para origem ou destino. Ele não abre um cruzamento físico. Use Construir estrada para criar uma ligação trafegável no SUMO.</HelpTip></div>
           <p className="panel-copy">Nomeie e clique sobre uma rua. O ponto entra no grafo como vértice de acesso ponderado pela posição na via e pode servir como origem ou destino. Ele não cria uma interseção física.</p>
           <div className="field"><label>Nome do próximo ponto</label><input value={accessName} onChange={event => setAccessName(event.target.value)} maxLength={100} /></div>
           <div className="access-list">{accessPoints.map(point => <div key={point.id}><strong>{point.name}</strong><small>{roadLabels.get(point.edge_id) || point.edge_id} · {number(point.position)} m</small>
@@ -513,7 +549,7 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
           <div className="urban-list">{urbanNetworks?.scenarios.find(item => item.id === urbanNetworks.active)?.signals?.map(item => <div key={item.node_id}><strong>Cruzamento {item.node_id}</strong><button disabled={building} onClick={() => urbanAction(`/urban/signals/${item.node_id}`, 'DELETE')}>Remover</button></div>)}</div>
           <p className="micro-note">Um ponto isolado fora de um cruzamento não pode receber semáforo físico. Construa primeiro a conexão viária se necessário.</p></section>}
 
-        {tool === 'build' && <><section className="panel-section"><div className="section-heading"><span><Route size={17} /> Construir estrada</span></div>
+        {tool === 'build' && <><section className="panel-section"><div className="section-heading"><span><Route size={17} /> Construir estrada</span><HelpTip title="Mapear uma rua pequena">Ligue duas vias existentes e clique nos pontos de curva para desenhar a rua ausente. O SUMO só permitirá carros após reconstruir e validar a conexão. Não invente nomes como se fossem dados OSM.</HelpTip></div>
           <p className="panel-copy">Marque origem e destino em vias existentes. Entre eles, clique em pontos de curva para traçar uma rua pequena ainda não mapeada. O novo trajeto entra no grafo físico após a reconstrução.</p>
           <div className="button-grid"><button className={buildPick === 'origin' ? 'active' : ''} onClick={() => setBuildPick('origin')}>1. Origem</button><button className={buildPick === 'via' ? 'active' : ''} disabled={!buildOrigin} onClick={() => setBuildPick('via')}>2. Curvas</button><button className={buildPick === 'destination' ? 'active' : ''} disabled={!buildOrigin} onClick={() => setBuildPick('destination')}>3. Destino</button></div>
           <div className="build-points"><div><b>A</b>{buildOrigin?.name || 'Clique no início'}</div><div><b>+</b>{buildWaypoints.length} pontos de curva</div><div><b>B</b>{buildDestination?.name || 'Clique no fim'}</div></div>
@@ -537,6 +573,7 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
 
         {tool === 'maps' && <><section className="panel-section"><div className="section-heading"><span><MapPin size={17} /> Mapas disponíveis</span></div>
           <p className="panel-copy">Cada mapa tem seus próprios arquivos OSM, grafo e cenários. A cidade original permanece preservada. Ativar outra malha reinicia a simulação em pausa.</p>
+          <p className="panel-copy">Esta malha exibe {number(baseRoads.features.length)} vias; {number(baseRoads.features.filter(feature => feature.properties?.name === 'Via sem nome').length)} ainda aparecem sem nome. Ruas ausentes precisam de dados OSM mais recentes ou de desenho manual em <b>Ruas e grafo → Construir estrada</b>.</p>
           <div className="urban-list">{(cityMaps?.cities || []).map(city => <div key={city.id || 'original'}><strong>{city.name}{cityMaps?.active === city.id ? ' · ativo' : ''}</strong>
             <small>{city.region || city.source} · versão {city.network_version}{city.drivable_edges ? ` · ${number(city.drivable_edges)} trechos` : ''}</small>
             <button disabled={mapImporting || cityMaps?.active === city.id} onClick={() => activateMap(city.id)}>Ativar</button></div>)}</div></section>
@@ -550,17 +587,34 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
             <button className="primary-button wide" disabled={mapImporting || !mapName.trim() || !mapFile} onClick={importMap}>{mapImporting ? 'Processando a malha…' : 'Importar e validar no SUMO'}</button>
             <p className="micro-note">Fonte da rede: arquivo OSM fornecido por você. Os cenários sintéticos continuam separados dos dados importados.</p></section></>}
 
-        {tool === 'light' && <section className="panel-section"><div className="section-heading"><span><Signal size={17} /> Semáforos reais do SUMO</span></div>
-          {selected?.kind === 'light' ? <><div className="inspector-id"><Signal size={20} />{selected.value.id}</div>
+        {tool === 'light' && <section className="panel-section"><div className="section-heading"><span><Signal size={17} /> Semáforos reais do SUMO</span><HelpTip title="Entenda o sinal misto">Misto resume um cruzamento com movimentos de cores diferentes. Selecione uma faixa abaixo ou aproxime o mapa e clique no marcador da via. As fases são programas completos do SUMO; esta tela altera a duração, não abre uma faixa isolada imediatamente.</HelpTip></div>
+          {selected?.kind === 'light' ? <><div className="inspector-id"><Signal size={20} />Cruzamento: {[...new Set(selected.value.movements.flatMap(item => [item.incoming_road, item.outgoing_road]).filter(Boolean))].slice(0, 2).join(' / ') || 'sem nome'}</div>
+            <p className="signal-id">Controlador SUMO: {selected.value.id}</p>
             <div className={`signal-badge ${selected.value.aspect}`}>{signalNames[selected.value.aspect]}</div>
-            <p className="panel-copy">{selected.value.aspect === 'mixed' ? 'Há movimentos verdes e vermelhos ao mesmo tempo. Aproxime até ver um sinal em cada faixa e clique na cor desejada.' : 'Aproxime para ver o estado de cada faixa controlada.'}</p>
+            <p className="panel-copy">Cada linha abaixo é uma conversão da faixa de entrada para a faixa de saída. A cor ao lado da via indica o estado atual daquele movimento.</p>
+            <div className="movement-list">{selected.value.movements.map(movement => <button key={movement.id}
+              className={selected.movement_id === movement.id ? 'selected' : ''}
+              onClick={() => setSelection({ kind: 'light', value: selected.value, movement_id: movement.id })}>
+              <span className={`movement-aspect ${movement.aspect}`} />
+              <span><strong>{movement.incoming_road || 'Via sem nome'} → {movement.outgoing_road || 'Via sem nome'}</strong><small>{movement.incoming_lane} → {movement.outgoing_lane}</small></span>
+              <b>{signalNames[movement.aspect]}</b></button>)}</div>
             {selected.movement_id && (() => { const movement = selected.value.movements.find(item => item.id === selected.movement_id); return movement ?
               <div className="movement-card"><span>FAIXA SELECIONADA · {signalNames[movement.aspect]}</span><strong>{movement.incoming_road || 'Via sem nome'} → {movement.outgoing_road || 'Via sem nome'}</strong><small>{movement.incoming_lane} → {movement.outgoing_lane}</small></div> : null; })()}
-            <div className="signal-counts"><span className="red">● {selected.value.counts.red} vermelhos</span><span className="yellow">● {selected.value.counts.yellow} amarelos</span><span className="green">● {selected.value.counts.green} verdes</span></div>
+            <div className="signal-counts"><span className="red">● {selected.value.movements.filter(item => item.aspect === 'closed').length} movimentos vermelhos</span><span className="yellow">● {selected.value.movements.filter(item => item.aspect === 'attention').length} amarelos</span><span className="green">● {selected.value.movements.filter(item => item.aspect === 'open').length} verdes</span></div>
             <div className="data-grid"><div>FASE ATUAL<strong>{selected.value.phase + 1}</strong></div><div>PRÓXIMA TROCA<strong>{number(Math.max(0, selected.value.next_switch - (snapshot?.sim_time || 0)))} s</strong></div></div>
-            <div className="phase-list">{selected.value.phases.map(phase => <div key={phase.index} className="phase-row"><span>Fase {phase.index + 1}</span><span>{number(phase.duration)} s</span><button disabled={!active || busy} onClick={() => act('/light', { tls_id: selected.value.id, phase: phase.index, duration: phaseDuration })}>Aplicar {phaseDuration}s</button></div>)}</div>
+            <h3 className="phase-title">Programação das fases <HelpTip title="Quais vias podem passar?">Verde e amarelo são derivados do programa válido do SUMO. Selecione uma faixa acima para ver seu estado em cada fase. Ajustar a duração preserva a sequência de segurança do controlador.</HelpTip></h3>
+            <div className="phase-list">{selected.value.phases.map(phase => { const selectedMovement = selected.value.movements.find(item => item.id === selected.movement_id);
+              const aspect = selectedMovement ? phase.state[selectedMovement.index] : null;
+              const green = selected.value.movements.filter(item => 'gG'.includes(phase.state[item.index] || 'r'));
+              return <div key={phase.index} className={`phase-row-detailed ${phase.index === selected.value.phase ? 'current' : ''}`}>
+                <div><strong>Fase {phase.index + 1}{phase.index === selected.value.phase ? ' · agora' : ''}</strong><small>{number(phase.duration)} s atuais</small></div>
+                {selectedMovement && <span className={`phase-selected ${aspect && 'gG'.includes(aspect) ? 'open' : aspect && 'yY'.includes(aspect) ? 'attention' : 'closed'}`}>Faixa escolhida: {aspect && 'gG'.includes(aspect) ? 'verde' : aspect && 'yY'.includes(aspect) ? 'amarelo' : 'vermelho'}</span>}
+                <p>{green.length ? `Passam: ${[...new Set(green.map(item => item.incoming_road || item.incoming_lane))].slice(0, 4).join(', ')}${green.length > 4 ? '…' : ''}` : 'Nenhuma faixa liberada nesta fase.'}</p>
+                <button disabled={!active || busy} onClick={() => act('/light', { tls_id: selected.value.id, phase: phase.index, duration: phaseDuration })}>Definir duração: {phaseDuration} s</button>
+              </div>; })}</div>
             <div className="field"><label>Nova duração: {phaseDuration} s</label><input type="range" min="3" max="120" value={phaseDuration} onChange={event => setPhaseDuration(Number(event.target.value))} /></div>
-            <button className="wide" disabled={!active || busy} onClick={() => act('/light', { tls_id: selected.value.id, restore: true })}>Restaurar programação</button></> : <p className="panel-copy">No zoom geral, cada ponto resume o cruzamento. A partir do zoom próximo, os estados aparecem separados nas faixas de entrada.</p>}</section>}
+            <button className="wide" disabled={!active || busy} onClick={() => act('/light', { tls_id: selected.value.id, restore: true })}>Restaurar programação</button>
+            <p className="micro-note">A mudança de duração entra no ciclo do controlador. Ela não força o sinal a mudar de cor no clique.</p></> : <p className="panel-copy">No zoom geral, cada ponto resume o cruzamento. A partir do zoom próximo, os estados aparecem separados nas faixas de entrada.</p>}</section>}
 
         {tool === 'weather' && <section className="panel-section"><div className="section-heading"><span><CloudSun size={17} /> Condição climática</span></div>
           <div className="weather-options">{[['sun', 'Sol', CloudSun], ['light_rain', 'Chuva fraca', CloudRain], ['heavy_rain', 'Chuva forte', CloudRain]].map(([key, label, Icon]) => <button key={String(key)} className={snapshot?.weather === key ? 'chosen' : ''} disabled={!active || busy} onClick={() => act('/weather', { weather: key })}><Icon size={18} /><span>{String(label)}</span></button>)}</div>

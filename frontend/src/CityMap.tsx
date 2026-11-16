@@ -9,6 +9,7 @@ type Props = {
   snapshot: Snapshot | null; selection: Selection; selectedRoadId: string | null; tool: string;
   customPoints: MapPoint[]; previewRoute: string[];
   theme: 'light' | 'dark'; showRoute: boolean; showPreviousRoute: boolean;
+  routePulseToken: string | null;
   followVehicleId: string | null; onStopFollow: () => void;
   graphOverlay: GraphOverlay | null; graphShowVertices: boolean; graphShowArcs: boolean;
   graphShowIds: boolean; graphShowWeights: boolean; graphComponent: number | null;
@@ -121,6 +122,8 @@ export default function CityMap(props: Props) {
         sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#101c25' } }] },
       attributionControl: false });
     map.current = instance;
+    const resizeObserver = new ResizeObserver(() => instance.resize());
+    resizeObserver.observe(container.current);
     instance.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
     instance.on('load', () => {
       addTrafficIcons(instance);
@@ -151,7 +154,7 @@ export default function CityMap(props: Props) {
       instance.addLayer({ id: 'partial-line', type: 'line', source: 'partial', paint: { 'line-color': '#f5b96f', 'line-width': 7, 'line-dasharray': [1.2, 0.8] } });
       instance.addLayer({ id: 'previous-route-line', type: 'line', source: 'previous-route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#bb95f7', 'line-width': 7, 'line-opacity': 0.85, 'line-dasharray': [1.3, 0.8] } });
       instance.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#12363b', 'line-width': 11 } });
-      instance.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#58ddc5', 'line-width': 7 } });
+      instance.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#58ddc5', 'line-width': 7, 'line-color-transition': { duration: 450 }, 'line-width-transition': { duration: 450 } } });
       instance.addLayer({ id: 'custom-route-line', type: 'line', source: 'custom-route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#9ee7d6', 'line-width': 5, 'line-dasharray': [2, 0.8] } });
       instance.addLayer({ id: 'blocked-glow', type: 'line', source: 'blocked', layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#ff334e', 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 15, 17, 26], 'line-opacity': 0.28 } });
@@ -318,7 +321,7 @@ export default function CityMap(props: Props) {
       instance.getContainer().querySelectorAll('.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out')
         .forEach(button => button.addEventListener('click', () => latest.current.onStopFollow()));
     });
-    return () => { if (animation.current !== null) cancelAnimationFrame(animation.current); instance.remove(); map.current = null; };
+    return () => { resizeObserver.disconnect(); if (animation.current !== null) cancelAnimationFrame(animation.current); instance.remove(); map.current = null; };
   }, []);
 
   useEffect(() => { (map.current?.getSource('base') as maplibregl.GeoJSONSource | undefined)?.setData(props.baseRoads); }, [props.baseRoads]);
@@ -328,6 +331,18 @@ export default function CityMap(props: Props) {
     fittedCity.current = props.snapshot?.city_id;
   }, [props.snapshot?.city_id, props.baseRoads]);
   useEffect(() => { (map.current?.getSource('roads') as maplibregl.GeoJSONSource | undefined)?.setData(props.network); }, [props.network]);
+  useEffect(() => {
+    const instance = map.current;
+    if (!props.routePulseToken || !instance?.getLayer('route-line')) return;
+    instance.setPaintProperty('route-line', 'line-color', '#f7c271');
+    instance.setPaintProperty('route-line', 'line-width', 10);
+    const timer = window.setTimeout(() => {
+      if (!map.current?.getLayer('route-line')) return;
+      map.current.setPaintProperty('route-line', 'line-color', '#58ddc5');
+      map.current.setPaintProperty('route-line', 'line-width', 7);
+    }, 1300);
+    return () => window.clearTimeout(timer);
+  }, [props.routePulseToken]);
   useEffect(() => { (map.current?.getSource('places') as maplibregl.GeoJSONSource | undefined)?.setData(props.places); }, [props.places]);
   useEffect(() => {
     const instance = map.current;

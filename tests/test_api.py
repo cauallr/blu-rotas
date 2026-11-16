@@ -19,3 +19,10 @@ def test_cannot_spawn_without_engine():
         if not client.get('/api/status').json()['connected']:
             response = client.post('/api/spawn', json={'count': 10})
             assert response.status_code == 400
+
+
+def test_situations_tutorial_is_served():
+    with TestClient(app) as client:
+        response = client.get('/tutorial_de_situações.html')
+        assert response.status_code == 200
+        assert 'Como simular situações e coletar dados' in response.text

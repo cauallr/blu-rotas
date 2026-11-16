@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart3, Download, FlaskConical, Play, RotateCcw } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import ReplayMap, { type ReplayFrame } from './ReplayMap';
+import HelpTip from './HelpTip';
 import type { FeatureCollection, Snapshot } from './types';
 
 type Kind = 'gps' | 'signals' | 'saturation' | 'roadworks' | 'new_road' | 'weather' | 'custom';
@@ -30,6 +31,15 @@ const presets: { kind: Kind; label: string; question: string }[] = [
   { kind: 'weather', label: 'F · Clima', question: 'Como a chuva afeta o fluxo?' },
   { kind: 'custom', label: 'Personalizado', question: 'Monte suas variantes.' }
 ];
+const studyHints: Record<Kind, { variable: string; observe: string; tip: string }> = {
+  gps: { variable: 'GPS estático × dinâmico', observe: 'tempo médio, P95, espera e mudanças de rota', tip: 'Mantenha a mesma semente e aumente os carros em novas execuções.' },
+  signals: { variable: 'duração de fases válidas', observe: 'filas, atraso e vias transversais', tip: 'Escolha um controlador na Cidade para saber quais faixas cada fase libera.' },
+  saturation: { variable: 'quantidade de carros', observe: 'curva de atraso e taxa de conclusão', tip: 'Use uma duração suficiente para que mais viagens possam terminar.' },
+  roadworks: { variable: 'interdição ou limite da via', observe: 'rotas alternativas, espera e viagens inacabadas', tip: 'Selecione uma via com duas faixas para incluir interdição parcial.' },
+  new_road: { variable: 'rede original × conexão construída', observe: 'tempo total e uso da nova estrada', tip: 'Construa e valide a estrada na Cidade antes de executar este estudo.' },
+  weather: { variable: 'sol × chuva fraca × intensa', observe: 'velocidade, espera e fluxo', tip: 'Anote os modificadores físicos; não são medições climáticas reais.' },
+  custom: { variable: 'variantes definidas por você', observe: 'métricas de veículo, via e cenário', tip: 'Altere uma variável por vez quando quiser uma comparação causal direta.' }
+};
 const number = (value: number | null | undefined, digits = 1) => value == null ? '—' : value.toLocaleString('pt-BR', { maximumFractionDigits: digits });
 const duration = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 const empty: FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -161,16 +171,17 @@ export default function ExperimentLab({ snapshot, theme }: { snapshot: Snapshot 
 
   return <section className="experiment-lab"><div className="experiment-heading"><div><div className="eyebrow">LABORATÓRIO CIENTÍFICO</div><h2>Experimentos reproduzíveis</h2><p>O SUMO avança em passos físicos de 0,25 s. O modo rápido só dispensa a renderização; demanda e regras do motor permanecem iguais.</p></div><FlaskConical size={35} /></div>
     <div className="preset-grid">{presets.map(item => <button key={item.kind} className={kind === item.kind ? 'active' : ''} onClick={() => { setKind(item.kind); setName(''); setQuestion(''); setHypothesis(''); }}><strong>{item.label}</strong><span>{item.question}</span></button>)}</div>
+    <div className="study-brief"><div><small>VARIÁVEL EM TESTE</small><strong>{studyHints[kind].variable}</strong></div><div><small>OBSERVE</small><strong>{studyHints[kind].observe}</strong></div><p>{studyHints[kind].tip}</p></div>
     <div className="experiment-form"><div className="field"><label>Nome do experimento</label><input placeholder={presets.find(item => item.kind === kind)?.label} value={name} onChange={event => setName(event.target.value)} /></div>
       <div className="field"><label>Pergunta científica</label><input placeholder="Use a pergunta do modelo ou escreva a sua" value={question} onChange={event => setQuestion(event.target.value)} /></div>
       <div className="field"><label>Hipótese</label><input placeholder="Use a hipótese do modelo ou escreva a sua" value={hypothesis} onChange={event => setHypothesis(event.target.value)} /></div>
       {kind === 'custom' && <div className="field"><label>Variável independente</label><input value={independent} onChange={event => setIndependent(event.target.value)} /></div>}
       <div className="field"><label>Veículos</label><select value={vehicles} onChange={event => setVehicles(Number(event.target.value))}>{[5, 10, 25, 50, 100, 250, 500].map(value => <option key={value} value={value}>{value}</option>)}</select></div>
-      <div className="field"><label>Repetições</label><input type="number" min="1" max="20" value={repetitions} onChange={event => setRepetitions(Number(event.target.value))} /></div>
-      <div className="field"><label>Semente</label><input type="number" value={seed} onChange={event => setSeed(Number(event.target.value))} /></div>
+      <div className="field"><label>Repetições <HelpTip title="Por que repetir?">As partidas e os pares de viagem são gerados pela semente. Repetir com sementes derivadas permite estimar a variação do resultado; A e B usam a mesma demanda em cada repetição.</HelpTip></label><input type="number" min="1" max="20" value={repetitions} onChange={event => setRepetitions(Number(event.target.value))} /></div>
+      <div className="field"><label>Semente <HelpTip title="Semente aleatória">Um número fixo permite recriar a demanda do estudo. Guarde-o junto da versão da malha, horários e parâmetros exportados.</HelpTip></label><input type="number" value={seed} onChange={event => setSeed(Number(event.target.value))} /></div>
       <div className="field"><label>Duração máxima (s)</label><input type="number" min="30" max="3600" value={maxTime} onChange={event => setMaxTime(Number(event.target.value))} /></div>
       <div className="field"><label>Janela de partidas (s)</label><input type="number" min="1" max="600" value={windowSeconds} onChange={event => setWindowSeconds(Number(event.target.value))} /></div>
-      <div className="field"><label>Modo</label><select value={mode} onChange={event => setMode(event.target.value as 'fast' | 'visual')}><option value="fast">Científico rápido</option><option value="visual">Visual em tempo real</option></select></div>
+      <div className="field"><label>Modo <HelpTip title="Rápido ou visual">Os dois usam a mesma física. O rápido calcula sem mostrar todos os quadros; o visual permite acompanhar a execução e rever os snapshots gravados.</HelpTip></label><select value={mode} onChange={event => setMode(event.target.value as 'fast' | 'visual')}><option value="fast">Científico rápido</option><option value="visual">Visual em tempo real</option></select></div>
       {(kind === 'roadworks' || kind === 'custom') && <div className="field"><label>ID da via {kind === 'roadworks' ? '(vazio = primeira via com 2 faixas)' : '(para variante de obra)'}</label><input value={roadId} onChange={event => setRoadId(event.target.value)} /></div>}
       {(kind === 'signals' || kind === 'custom') && <div className="field"><label>ID do semáforo {kind === 'signals' ? '(vazio = primeiro)' : '(para variante de fase)'}</label><input value={tlsId} onChange={event => setTlsId(event.target.value)} /></div>}
       {kind === 'new_road' && <p className="experiment-note">Cenário de rua nova: {snapshot?.network_scenario_id || 'construa uma via em Modo Cidade antes de executar E'}.</p>}
