@@ -1,0 +1,7 @@
+﻿level,strategy,seed,requested,completed,unfinished,completion_rate,mean_travel_s,median_travel_s,p95_travel_s,max_travel_s,mean_door_to_door_s,mean_time_loss_s,mean_waiting_s,mean_depart_delay_s,mean_distance_m,reroutes,assigned_primary,assigned_alternative,peak_queue_primary,peak_queue_alternative,mean_queue_primary,mean_queue_alternative,peak_pending_insertion,focal_travel_s,focal_door_to_door_s
+alto,um_quarto,20261114,180,180,0,1.0,234.51,223.75,350.98,374.0,253.15,145.0,69.53,18.76,1226.11,0,135,45,24,9,5.79,1.79,31,175.75,185.56
+alto,tres_quartos,20261114,180,180,0,1.0,246.97,237.75,359.09,390.5,288.16,149.59,71.6,41.31,1303.25,0,45,135,13,12,1.51,3.38,46,273.25,306.06
+alto,um_quarto,20261115,180,180,0,1.0,237.05,222.38,365.76,435.5,255.62,147.54,69.88,18.7,1226.11,0,135,45,25,8,5.97,1.87,31,176.25,186.07
+alto,tres_quartos,20261115,180,180,0,1.0,246.38,235.25,348.83,378.0,281.52,149.0,73.0,35.27,1303.43,0,45,135,14,12,1.53,3.37,41,296.75,326.32
+alto,um_quarto,20261116,180,180,0,1.0,236.99,222.25,361.02,435.25,253.94,147.48,70.89,17.08,1226.11,0,135,45,25,8,6.57,1.74,30,179.25,187.33
+alto,tres_quartos,20261116,180,180,0,1.0,247.89,243.38,369.01,395.5,280.06,150.51,74.51,32.3,1303.49,0,45,135,13,11,1.65,3.37,39,285.5,315.08

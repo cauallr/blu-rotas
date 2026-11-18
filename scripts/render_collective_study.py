@@ -20,7 +20,8 @@ SUMMARY = json.loads((OUT / "summary.json").read_text(encoding="utf-8"))
 RUNS = [json.loads(path.read_text(encoding="utf-8")) for path in sorted((OUT / "runs").glob("*.json"))
        if path.name.count("__") == 2]
 COLORS = {"principal": "#2166ac", "um_desvio": "#7b61a8", "todos_desvio": "#d1495b",
-          "dividido": "#d18b20", "gps_dinamico": "#238f71"}
+          "dividido": "#d18b20", "gps_dinamico": "#238f71",
+          "um_quarto": "#8d67bd", "tres_quartos": "#c35f88"}
 LEVELS = ["baixo", "medio", "alto"]
 STRATEGIES = [strategy for strategy in SUMMARY["design"]["strategies"]
               if any(row["strategy"] == strategy for row in SUMMARY["aggregates"])]

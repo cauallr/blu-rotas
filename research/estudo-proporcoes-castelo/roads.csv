@@ -1,0 +1,187 @@
+﻿level,strategy,seed,edge_id,name,mean_speed_kmh,vehicle_observations,mean_queue,max_queue,free_speed_kmh
+alto,um_quarto,20261114,51835269#1,Rua Padre Roberto Landell de Moura,65.66,13,0.0,0,80.0
+alto,um_quarto,20261114,331521792#2,Avenida Presidente Castelo Branco,47.2,4,0.0,0,50.0
+alto,um_quarto,20261114,369441147#3,Avenida Presidente Castelo Branco,48.96,52,0.0,0,50.0
+alto,um_quarto,20261114,583996310#1,Rua Padre Roberto Landell de Moura,55.89,8,0.0,0,80.0
+alto,um_quarto,20261114,333713903#10,Rua XV de Novembro,37.19,22,0.0,0,40.0
+alto,um_quarto,20261114,401019287#0,Avenida Presidente Castelo Branco,39.28,275,0.0,0,50.0
+alto,um_quarto,20261114,331521792#3,Avenida Presidente Castelo Branco,31.81,244,0.0,0,50.0
+alto,um_quarto,20261114,333713903#13,Rua XV de Novembro,38.17,12,0.0,0,40.0
+alto,um_quarto,20261114,333713903#12,Rua XV de Novembro,36.55,59,0.0,0,40.0
+alto,um_quarto,20261114,369441147#2,Avenida Presidente Castelo Branco,48.8,9,0.0,0,50.0
+alto,um_quarto,20261114,369441147#1,Avenida Presidente Castelo Branco,47.68,59,0.0,0,50.0
+alto,um_quarto,20261114,333713903#4,Rua XV de Novembro,34.44,10,0.0,0,40.0
+alto,um_quarto,20261114,51835269#2,Rua Padre Roberto Landell de Moura,65.35,9,0.0,0,80.0
+alto,um_quarto,20261114,333713903#7,Rua XV de Novembro,38.75,92,0.0,0,40.0
+alto,um_quarto,20261114,1151559472#0,Avenida Presidente Castelo Branco,12.15,2045,8.546,46,50.0
+alto,um_quarto,20261114,369441147#4,Avenida Presidente Castelo Branco,49.16,29,0.0,0,50.0
+alto,um_quarto,20261114,333713903#9,Rua XV de Novembro,34.26,20,0.0,0,40.0
+alto,um_quarto,20261114,331521792#4,Avenida Presidente Castelo Branco,17.21,774,1.092,11,50.0
+alto,um_quarto,20261114,331521792#1,Avenida Presidente Castelo Branco,39.75,314,0.0,0,50.0
+alto,um_quarto,20261114,937427126,Rua XV de Novembro,38.34,26,0.0,0,40.0
+alto,um_quarto,20261114,331521794#1,Avenida Presidente Castelo Branco,13.79,649,2.966,12,50.0
+alto,um_quarto,20261114,335303718,Avenida Presidente Castelo Branco,44.64,201,0.0,0,50.0
+alto,um_quarto,20261114,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,um_quarto,20261114,583996310#2,Rua Padre Roberto Landell de Moura,54.3,17,0.0,0,80.0
+alto,um_quarto,20261114,284625097#1,Avenida Presidente Castelo Branco,48.99,282,0.0,0,50.0
+alto,um_quarto,20261114,331521791,Avenida Presidente Castelo Branco,16.9,1418,4.605,22,50.0
+alto,um_quarto,20261114,331521794#0,Avenida Presidente Castelo Branco,17.69,529,1.731,6,50.0
+alto,um_quarto,20261114,369441147#0,Avenida Presidente Castelo Branco,43.66,99,0.0,0,50.0
+alto,um_quarto,20261114,51835269#0,Rua Padre Roberto Landell de Moura,61.37,21,0.0,0,80.0
+alto,um_quarto,20261114,401019287#1,Avenida Presidente Castelo Branco,43.97,24,0.008,1,50.0
+alto,um_quarto,20261114,52238004#0,Rua Professor José Ferreira da Silva,6.5,285,1.79,9,80.0
+alto,tres_quartos,20261114,51835269#1,Rua Padre Roberto Landell de Moura,60.07,45,0.0,0,80.0
+alto,tres_quartos,20261114,331521792#2,Avenida Presidente Castelo Branco,49.75,1,0.0,0,50.0
+alto,tres_quartos,20261114,369441147#3,Avenida Presidente Castelo Branco,49.74,50,0.0,0,50.0
+alto,tres_quartos,20261114,583996310#1,Rua Padre Roberto Landell de Moura,57.18,8,0.0,0,80.0
+alto,tres_quartos,20261114,333713903#10,Rua XV de Novembro,36.87,57,0.0,0,40.0
+alto,tres_quartos,20261114,401019287#0,Avenida Presidente Castelo Branco,25.44,652,0.531,8,50.0
+alto,tres_quartos,20261114,331521792#3,Avenida Presidente Castelo Branco,49.64,38,0.0,0,50.0
+alto,tres_quartos,20261114,333713903#13,Rua XV de Novembro,36.54,37,0.0,0,40.0
+alto,tres_quartos,20261114,333713903#12,Rua XV de Novembro,33.91,187,0.0,0,40.0
+alto,tres_quartos,20261114,369441147#2,Avenida Presidente Castelo Branco,49.78,11,0.0,0,50.0
+alto,tres_quartos,20261114,369441147#1,Avenida Presidente Castelo Branco,49.63,50,0.0,0,50.0
+alto,tres_quartos,20261114,333713903#4,Rua XV de Novembro,33.18,35,0.0,0,40.0
+alto,tres_quartos,20261114,51835269#2,Rua Padre Roberto Landell de Moura,56.23,40,0.0,0,80.0
+alto,tres_quartos,20261114,333713903#7,Rua XV de Novembro,38.85,273,0.0,0,40.0
+alto,tres_quartos,20261114,1151559472#0,Avenida Presidente Castelo Branco,11.19,2300,7.315,45,50.0
+alto,tres_quartos,20261114,369441147#4,Avenida Presidente Castelo Branco,49.79,24,0.0,0,50.0
+alto,tres_quartos,20261114,333713903#9,Rua XV de Novembro,36.93,62,0.0,0,40.0
+alto,tres_quartos,20261114,331521792#4,Avenida Presidente Castelo Branco,40.24,89,0.098,3,50.0
+alto,tres_quartos,20261114,331521792#1,Avenida Presidente Castelo Branco,49.57,76,0.0,0,50.0
+alto,tres_quartos,20261114,937427126,Rua XV de Novembro,34.57,97,0.0,0,40.0
+alto,tres_quartos,20261114,331521794#1,Avenida Presidente Castelo Branco,23.59,213,1.084,5,50.0
+alto,tres_quartos,20261114,335303718,Avenida Presidente Castelo Branco,37.19,267,0.0,0,50.0
+alto,tres_quartos,20261114,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,tres_quartos,20261114,583996310#2,Rua Padre Roberto Landell de Moura,44.18,70,0.203,2,80.0
+alto,tres_quartos,20261114,284625097#1,Avenida Presidente Castelo Branco,49.43,287,0.0,0,50.0
+alto,tres_quartos,20261114,331521791,Avenida Presidente Castelo Branco,12.42,2039,5.224,26,50.0
+alto,tres_quartos,20261114,331521794#0,Avenida Presidente Castelo Branco,28.71,108,0.329,5,50.0
+alto,tres_quartos,20261114,369441147#0,Avenida Presidente Castelo Branco,47.75,75,0.0,0,50.0
+alto,tres_quartos,20261114,51835269#0,Rua Padre Roberto Landell de Moura,50.14,83,0.0,0,80.0
+alto,tres_quartos,20261114,401019287#1,Avenida Presidente Castelo Branco,42.06,46,0.098,1,50.0
+alto,tres_quartos,20261114,52238004#0,Rua Professor José Ferreira da Silva,7.69,662,3.182,11,80.0
+alto,um_quarto,20261115,51835269#1,Rua Padre Roberto Landell de Moura,67.25,13,0.0,0,80.0
+alto,um_quarto,20261115,331521792#2,Avenida Presidente Castelo Branco,42.43,2,0.0,0,50.0
+alto,um_quarto,20261115,369441147#3,Avenida Presidente Castelo Branco,49.02,50,0.0,0,50.0
+alto,um_quarto,20261115,583996310#1,Rua Padre Roberto Landell de Moura,55.35,6,0.0,0,80.0
+alto,um_quarto,20261115,333713903#10,Rua XV de Novembro,36.48,22,0.0,0,40.0
+alto,um_quarto,20261115,401019287#0,Avenida Presidente Castelo Branco,39.09,280,0.0,0,50.0
+alto,um_quarto,20261115,331521792#3,Avenida Presidente Castelo Branco,29.25,260,0.017,2,50.0
+alto,um_quarto,20261115,333713903#13,Rua XV de Novembro,38.59,12,0.0,0,40.0
+alto,um_quarto,20261115,333713903#12,Rua XV de Novembro,35.9,59,0.0,0,40.0
+alto,um_quarto,20261115,369441147#2,Avenida Presidente Castelo Branco,48.65,13,0.0,0,50.0
+alto,um_quarto,20261115,369441147#1,Avenida Presidente Castelo Branco,48.02,56,0.0,0,50.0
+alto,um_quarto,20261115,333713903#4,Rua XV de Novembro,32.81,12,0.0,0,40.0
+alto,um_quarto,20261115,51835269#2,Rua Padre Roberto Landell de Moura,63.02,10,0.0,0,80.0
+alto,um_quarto,20261115,333713903#7,Rua XV de Novembro,38.82,91,0.0,0,40.0
+alto,um_quarto,20261115,1151559472#0,Avenida Presidente Castelo Branco,12.17,2043,8.529,46,50.0
+alto,um_quarto,20261115,369441147#4,Avenida Presidente Castelo Branco,49.09,28,0.0,0,50.0
+alto,um_quarto,20261115,333713903#9,Rua XV de Novembro,34.38,19,0.0,0,40.0
+alto,um_quarto,20261115,331521792#4,Avenida Presidente Castelo Branco,16.91,811,1.134,10,50.0
+alto,um_quarto,20261115,331521792#1,Avenida Presidente Castelo Branco,37.68,322,0.0,0,50.0
+alto,um_quarto,20261115,937427126,Rua XV de Novembro,38.96,27,0.0,0,40.0
+alto,um_quarto,20261115,331521794#1,Avenida Presidente Castelo Branco,13.26,675,3.109,12,50.0
+alto,um_quarto,20261115,335303718,Avenida Presidente Castelo Branco,44.43,201,0.0,0,50.0
+alto,um_quarto,20261115,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,um_quarto,20261115,583996310#2,Rua Padre Roberto Landell de Moura,53.29,16,0.0,0,80.0
+alto,um_quarto,20261115,284625097#1,Avenida Presidente Castelo Branco,49.03,285,0.0,0,50.0
+alto,um_quarto,20261115,331521791,Avenida Presidente Castelo Branco,17.1,1395,4.471,22,50.0
+alto,um_quarto,20261115,331521794#0,Avenida Presidente Castelo Branco,17.9,528,1.714,6,50.0
+alto,um_quarto,20261115,369441147#0,Avenida Presidente Castelo Branco,42.95,100,0.0,0,50.0
+alto,um_quarto,20261115,51835269#0,Rua Padre Roberto Landell de Moura,60.66,18,0.0,0,80.0
+alto,um_quarto,20261115,401019287#1,Avenida Presidente Castelo Branco,44.52,24,0.0,0,50.0
+alto,um_quarto,20261115,52238004#0,Rua Professor José Ferreira da Silva,6.11,296,1.874,8,80.0
+alto,tres_quartos,20261115,51835269#1,Rua Padre Roberto Landell de Moura,59.38,45,0.0,0,80.0
+alto,tres_quartos,20261115,331521792#2,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,tres_quartos,20261115,369441147#3,Avenida Presidente Castelo Branco,49.75,55,0.0,0,50.0
+alto,tres_quartos,20261115,583996310#1,Rua Padre Roberto Landell de Moura,57.95,5,0.0,0,80.0
+alto,tres_quartos,20261115,333713903#10,Rua XV de Novembro,36.47,59,0.0,0,40.0
+alto,tres_quartos,20261115,401019287#0,Avenida Presidente Castelo Branco,25.53,653,1.021,11,50.0
+alto,tres_quartos,20261115,331521792#3,Avenida Presidente Castelo Branco,49.53,36,0.0,0,50.0
+alto,tres_quartos,20261115,333713903#13,Rua XV de Novembro,36.41,41,0.0,0,40.0
+alto,tres_quartos,20261115,333713903#12,Rua XV de Novembro,33.88,190,0.0,0,40.0
+alto,tres_quartos,20261115,369441147#2,Avenida Presidente Castelo Branco,49.65,12,0.0,0,50.0
+alto,tres_quartos,20261115,369441147#1,Avenida Presidente Castelo Branco,49.58,53,0.0,0,50.0
+alto,tres_quartos,20261115,333713903#4,Rua XV de Novembro,33.13,35,0.0,0,40.0
+alto,tres_quartos,20261115,51835269#2,Rua Padre Roberto Landell de Moura,56.65,41,0.0,0,80.0
+alto,tres_quartos,20261115,333713903#7,Rua XV de Novembro,38.82,274,0.0,0,40.0
+alto,tres_quartos,20261115,1151559472#0,Avenida Presidente Castelo Branco,11.44,2224,6.958,45,50.0
+alto,tres_quartos,20261115,369441147#4,Avenida Presidente Castelo Branco,49.76,27,0.0,0,50.0
+alto,tres_quartos,20261115,333713903#9,Rua XV de Novembro,37.34,67,0.0,0,40.0
+alto,tres_quartos,20261115,331521792#4,Avenida Presidente Castelo Branco,39.36,87,0.106,4,50.0
+alto,tres_quartos,20261115,331521792#1,Avenida Presidente Castelo Branco,49.46,79,0.0,0,50.0
+alto,tres_quartos,20261115,937427126,Rua XV de Novembro,35.02,96,0.0,0,40.0
+alto,tres_quartos,20261115,331521794#1,Avenida Presidente Castelo Branco,24.89,200,0.993,5,50.0
+alto,tres_quartos,20261115,335303718,Avenida Presidente Castelo Branco,38.22,260,0.0,0,50.0
+alto,tres_quartos,20261115,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,tres_quartos,20261115,583996310#2,Rua Padre Roberto Landell de Moura,46.83,84,0.282,1,80.0
+alto,tres_quartos,20261115,284625097#1,Avenida Presidente Castelo Branco,49.41,283,0.0,0,50.0
+alto,tres_quartos,20261115,331521791,Avenida Presidente Castelo Branco,12.02,2104,5.599,24,50.0
+alto,tres_quartos,20261115,331521794#0,Avenida Presidente Castelo Branco,27.45,122,0.43,5,50.0
+alto,tres_quartos,20261115,369441147#0,Avenida Presidente Castelo Branco,47.72,75,0.0,0,50.0
+alto,tres_quartos,20261115,51835269#0,Rua Padre Roberto Landell de Moura,51.69,77,0.0,0,80.0
+alto,tres_quartos,20261115,401019287#1,Avenida Presidente Castelo Branco,40.92,59,0.176,1,50.0
+alto,tres_quartos,20261115,52238004#0,Rua Professor José Ferreira da Silva,8.21,637,3.085,11,80.0
+alto,um_quarto,20261116,51835269#1,Rua Padre Roberto Landell de Moura,66.32,11,0.0,0,80.0
+alto,um_quarto,20261116,331521792#2,Avenida Presidente Castelo Branco,45.01,5,0.0,0,50.0
+alto,um_quarto,20261116,369441147#3,Avenida Presidente Castelo Branco,49.28,57,0.0,0,50.0
+alto,um_quarto,20261116,583996310#1,Rua Padre Roberto Landell de Moura,57.6,7,0.0,0,80.0
+alto,um_quarto,20261116,333713903#10,Rua XV de Novembro,36.13,25,0.0,0,40.0
+alto,um_quarto,20261116,401019287#0,Avenida Presidente Castelo Branco,39.71,271,0.0,0,50.0
+alto,um_quarto,20261116,331521792#3,Avenida Presidente Castelo Branco,30.06,260,0.008,1,50.0
+alto,um_quarto,20261116,333713903#13,Rua XV de Novembro,38.52,13,0.0,0,40.0
+alto,um_quarto,20261116,333713903#12,Rua XV de Novembro,35.81,59,0.0,0,40.0
+alto,um_quarto,20261116,369441147#2,Avenida Presidente Castelo Branco,49.32,12,0.0,0,50.0
+alto,um_quarto,20261116,369441147#1,Avenida Presidente Castelo Branco,48.15,56,0.0,0,50.0
+alto,um_quarto,20261116,333713903#4,Rua XV de Novembro,32.46,10,0.0,0,40.0
+alto,um_quarto,20261116,51835269#2,Rua Padre Roberto Landell de Moura,65.11,13,0.0,0,80.0
+alto,um_quarto,20261116,333713903#7,Rua XV de Novembro,38.99,90,0.0,0,40.0
+alto,um_quarto,20261116,1151559472#0,Avenida Presidente Castelo Branco,12.47,1994,8.225,46,50.0
+alto,um_quarto,20261116,369441147#4,Avenida Presidente Castelo Branco,49.25,27,0.0,0,50.0
+alto,um_quarto,20261116,333713903#9,Rua XV de Novembro,34.18,18,0.0,0,40.0
+alto,um_quarto,20261116,331521792#4,Avenida Presidente Castelo Branco,15.78,852,1.483,11,50.0
+alto,um_quarto,20261116,331521792#1,Avenida Presidente Castelo Branco,38.85,324,0.0,0,50.0
+alto,um_quarto,20261116,937427126,Rua XV de Novembro,39.17,24,0.0,0,40.0
+alto,um_quarto,20261116,331521794#1,Avenida Presidente Castelo Branco,12.9,682,3.183,12,50.0
+alto,um_quarto,20261116,335303718,Avenida Presidente Castelo Branco,44.72,198,0.0,0,50.0
+alto,um_quarto,20261116,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,um_quarto,20261116,583996310#2,Rua Padre Roberto Landell de Moura,51.99,13,0.0,0,80.0
+alto,um_quarto,20261116,284625097#1,Avenida Presidente Castelo Branco,49.1,284,0.0,0,50.0
+alto,um_quarto,20261116,331521791,Avenida Presidente Castelo Branco,17.24,1391,4.417,23,50.0
+alto,um_quarto,20261116,331521794#0,Avenida Presidente Castelo Branco,15.93,576,1.892,7,50.0
+alto,um_quarto,20261116,369441147#0,Avenida Presidente Castelo Branco,45.23,86,0.0,0,50.0
+alto,um_quarto,20261116,51835269#0,Rua Padre Roberto Landell de Moura,60.93,19,0.0,0,80.0
+alto,um_quarto,20261116,401019287#1,Avenida Presidente Castelo Branco,45.33,21,0.0,0,50.0
+alto,um_quarto,20261116,52238004#0,Rua Professor José Ferreira da Silva,6.28,282,1.742,8,80.0
+alto,tres_quartos,20261116,51835269#1,Rua Padre Roberto Landell de Moura,58.95,48,0.0,0,80.0
+alto,tres_quartos,20261116,331521792#2,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,tres_quartos,20261116,369441147#3,Avenida Presidente Castelo Branco,49.72,55,0.0,0,50.0
+alto,tres_quartos,20261116,583996310#1,Rua Padre Roberto Landell de Moura,57.26,6,0.0,0,80.0
+alto,tres_quartos,20261116,333713903#10,Rua XV de Novembro,36.01,63,0.0,0,40.0
+alto,tres_quartos,20261116,401019287#0,Avenida Presidente Castelo Branco,24.27,696,1.268,11,50.0
+alto,tres_quartos,20261116,331521792#3,Avenida Presidente Castelo Branco,49.74,36,0.0,0,50.0
+alto,tres_quartos,20261116,333713903#13,Rua XV de Novembro,35.92,36,0.0,0,40.0
+alto,tres_quartos,20261116,333713903#12,Rua XV de Novembro,33.11,197,0.0,0,40.0
+alto,tres_quartos,20261116,369441147#2,Avenida Presidente Castelo Branco,49.65,11,0.0,0,50.0
+alto,tres_quartos,20261116,369441147#1,Avenida Presidente Castelo Branco,49.57,53,0.0,0,50.0
+alto,tres_quartos,20261116,333713903#4,Rua XV de Novembro,33.66,36,0.0,0,40.0
+alto,tres_quartos,20261116,51835269#2,Rua Padre Roberto Landell de Moura,56.38,49,0.0,0,80.0
+alto,tres_quartos,20261116,333713903#7,Rua XV de Novembro,38.84,275,0.0,0,40.0
+alto,tres_quartos,20261116,1151559472#0,Avenida Presidente Castelo Branco,11.99,2139,6.789,41,50.0
+alto,tres_quartos,20261116,369441147#4,Avenida Presidente Castelo Branco,49.81,28,0.0,0,50.0
+alto,tres_quartos,20261116,333713903#9,Rua XV de Novembro,36.27,67,0.0,0,40.0
+alto,tres_quartos,20261116,331521792#4,Avenida Presidente Castelo Branco,42.25,70,0.092,3,50.0
+alto,tres_quartos,20261116,331521792#1,Avenida Presidente Castelo Branco,49.55,79,0.0,0,50.0
+alto,tres_quartos,20261116,937427126,Rua XV de Novembro,34.73,95,0.0,0,40.0
+alto,tres_quartos,20261116,331521794#1,Avenida Presidente Castelo Branco,23.55,215,1.099,5,50.0
+alto,tres_quartos,20261116,335303718,Avenida Presidente Castelo Branco,36.69,273,0.035,1,50.0
+alto,tres_quartos,20261116,284625097#0,Avenida Presidente Castelo Branco,,0,0.0,0,50.0
+alto,tres_quartos,20261116,583996310#2,Rua Padre Roberto Landell de Moura,43.25,105,0.415,2,80.0
+alto,tres_quartos,20261116,284625097#1,Avenida Presidente Castelo Branco,49.4,285,0.0,0,50.0
+alto,tres_quartos,20261116,331521791,Avenida Presidente Castelo Branco,11.69,2141,5.789,26,50.0
+alto,tres_quartos,20261116,331521794#0,Avenida Presidente Castelo Branco,26.87,128,0.458,5,50.0
+alto,tres_quartos,20261116,369441147#0,Avenida Presidente Castelo Branco,47.74,74,0.0,0,50.0
+alto,tres_quartos,20261116,51835269#0,Rua Padre Roberto Landell de Moura,51.7,78,0.0,0,80.0
+alto,tres_quartos,20261116,401019287#1,Avenida Presidente Castelo Branco,40.31,60,0.204,1,50.0
+alto,tres_quartos,20261116,52238004#0,Rua Professor José Ferreira da Silva,8.59,615,2.958,10,80.0

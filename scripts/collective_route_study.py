@@ -33,13 +33,16 @@ DESTINATION = "93392451#3"
 PRIMARY_NAME = "Avenida Brasil"
 CORRIDORS = {"brasil": (ORIGIN, DESTINATION, PRIMARY_NAME),
              "castelo": ("1151559472#0", "284625097#1", "Avenida Presidente Castelo Branco")}
-STRATEGIES = ("principal", "um_desvio", "todos_desvio", "dividido", "gps_dinamico")
+DEFAULT_STRATEGIES = ("principal", "um_desvio", "todos_desvio", "dividido", "gps_dinamico")
+STRATEGIES = (*DEFAULT_STRATEGIES, "um_quarto", "tres_quartos")
 LABELS = {
     "principal": "Todos na Avenida Brasil",
     "um_desvio": "Um motorista na alternativa",
     "todos_desvio": "Todos na alternativa",
     "dividido": "Metade em cada rota",
     "gps_dinamico": "GPS dinâmico, partida principal",
+    "um_quarto": "25% na alternativa",
+    "tres_quartos": "75% na alternativa",
 }
 LEVELS = {"baixo": 30, "medio": 90, "alto": 180}
 SEEDS = (20261114, 20261115, 20261116)
@@ -108,7 +111,7 @@ def balanced_ids(schedule: list[dict]) -> set[int]:
 def assigned_route(strategy: str, index: int, balanced: set[int]) -> str:
     if strategy == "todos_desvio" or strategy == "um_desvio" and index == FOCAL_INDEX:
         return "alternative"
-    if strategy == "dividido" and index in balanced:
+    if strategy in {"dividido", "um_quarto", "tres_quartos"} and index in balanced:
         return "alternative"
     return "primary"
 
@@ -119,7 +122,7 @@ def run_one(output: Path, route: dict, level: str, strategy: str, seed: int) -> 
     signature = hashlib.sha256(json.dumps({"network": route["network_sha256_16"],
         "level": level, "strategy": strategy, "seed": seed, "window": DEPARTURE_WINDOW,
         "limit": MAX_TIME, "capture": CAPTURE_SECONDS,
-        "balanced_policy": 2 if strategy == "dividido" else 1,
+        "balanced_policy": 2 if strategy == "dividido" else 3 if strategy in {"um_quarto", "tres_quartos"} else 1,
         **({"corridor": [ORIGIN, DESTINATION]} if PRIMARY_NAME != "Avenida Brasil" else {})},
         sort_keys=True).encode()).hexdigest()[:16]
     if path.exists():
@@ -131,7 +134,9 @@ def run_one(output: Path, route: dict, level: str, strategy: str, seed: int) -> 
             print(f"reutilizado {key}", flush=True)
             return previous
     schedule = departures(seed, level)
-    half_alt = balanced_ids(schedule)
+    half_alt = (set(trip["demand_index"] for trip in schedule[::4]) if strategy == "um_quarto" else
+                set(trip["demand_index"] for position, trip in enumerate(schedule) if position % 4 < 3)
+                if strategy == "tres_quartos" else balanced_ids(schedule))
     tripinfo_file = output / "runs" / f"{key}.tripinfo.xml"
     store = Storage(str(output / "runs" / f"{key}.sqlite3"))
     sim = Simulator(str(ROOT / "data"), store)
@@ -405,7 +410,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--corridor", choices=CORRIDORS, default="brasil")
     parser.add_argument("--levels", nargs="+", choices=LEVELS, default=list(LEVELS))
-    parser.add_argument("--strategies", nargs="+", choices=STRATEGIES, default=list(STRATEGIES))
+    parser.add_argument("--strategies", nargs="+", choices=STRATEGIES, default=list(DEFAULT_STRATEGIES))
     parser.add_argument("--seeds", nargs="+", type=int, default=list(SEEDS))
     args = parser.parse_args()
     ORIGIN, DESTINATION, PRIMARY_NAME = CORRIDORS[args.corridor]

@@ -1,0 +1,6 @@
+﻿alternative_percent,repetitions,requested_total,completed_total,mean_travel_s,mean_door_to_door_s,mean_depart_delay_s,p95_travel_s,mean_time_loss_s,mean_waiting_s,peak_queue_primary,peak_queue_alternative,peak_pending_insertion,vs_0_travel_difference_s,vs_0_travel_ci95_low_s,vs_0_travel_ci95_high_s,vs_0_door_difference_s,vs_0_door_ci95_low_s,vs_0_door_ci95_high_s,vs_50_travel_difference_s,vs_50_travel_ci95_low_s,vs_50_travel_ci95_high_s,vs_50_door_difference_s,vs_50_door_ci95_low_s,vs_50_door_ci95_high_s
+0,3,540,540,308.82,326.9,18.2,553.2,223.21,98.91,44,0,30.67,0.0,0.0,0.0,0.0,0.0,0.0,97.66,64.4,130.92,97.6,63.86,131.34
+25,3,540,540,236.18,254.24,18.18,359.25,146.67,70.1,24.67,8.33,30.67,-72.64,-110.23,-35.05,-72.66,-109.86,-35.46,25.02,20.7,29.35,24.94,21.3,28.58
+50,3,540,540,211.16,229.29,18.26,271.08,117.7,65.14,21.33,10.33,30.67,-97.66,-130.92,-64.4,-97.6,-131.34,-63.86,0.0,0.0,0.0,0.0,0.0,0.0
+75,3,540,540,247.08,283.25,36.29,358.98,149.7,73.04,13.33,11.67,42,-61.74,-97.03,-26.45,-43.65,-69.22,-18.08,35.92,32.29,39.55,53.95,43.66,64.25
+100,3,540,540,315.52,389.82,74.43,494.88,214.22,96.49,0,11,63.67,6.69,-31.11,44.49,62.92,29.48,96.37,104.36,99.5,109.21,160.53,158.55,162.5

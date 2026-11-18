@@ -1,0 +1,209 @@
+{
+  "route": {
+    "origin": "1151559472#0",
+    "destination": "284625097#1",
+    "origin_coordinates": [
+      -49.06296450952251,
+      -26.921010545517447
+    ],
+    "destination_coordinates": [
+      -49.070118393128986,
+      -26.913792318226495
+    ],
+    "primary": {
+      "key": "best",
+      "label": "Melhor rota",
+      "route": [
+        "1151559472#0",
+        "331521791",
+        "335303718",
+        "401019287#0",
+        "401019287#1",
+        "331521792#1",
+        "331521792#2",
+        "331521792#3",
+        "331521792#4",
+        "331521794#0",
+        "331521794#1",
+        "369441147#0",
+        "369441147#1",
+        "369441147#2",
+        "369441147#3",
+        "369441147#4",
+        "284625097#0",
+        "284625097#1"
+      ],
+      "seconds": 73.0,
+      "distance_m": 1014.3,
+      "segments": 18
+    },
+    "alternative": {
+      "key": "secondary",
+      "label": "Rota secundária",
+      "route": [
+        "1151559472#0",
+        "331521791",
+        "335303718",
+        "401019287#0",
+        "401019287#1",
+        "52238004#0",
+        "333713903#4",
+        "333713903#7",
+        "333713903#9",
+        "333713903#10",
+        "333713903#12",
+        "333713903#13",
+        "937427126",
+        "51835269#0",
+        "51835269#1",
+        "51835269#2",
+        "583996310#1",
+        "583996310#2",
+        "369441147#0",
+        "369441147#1",
+        "369441147#2",
+        "369441147#3",
+        "369441147#4",
+        "284625097#0",
+        "284625097#1"
+      ],
+      "seconds": 79.6,
+      "distance_m": 1081.7,
+      "segments": 25
+    },
+    "primary_streets": [
+      "Avenida Presidente Castelo Branco"
+    ],
+    "alternative_streets": [
+      "Avenida Presidente Castelo Branco",
+      "Rua Professor José Ferreira da Silva",
+      "Rua XV de Novembro",
+      "Rua Padre Roberto Landell de Moura"
+    ],
+    "network_sha256_16": "633d9a0824eb0bb7",
+    "shared_edges": 12,
+    "exclusive_primary": [
+      "331521792#1",
+      "331521792#2",
+      "331521792#3",
+      "331521792#4",
+      "331521794#0",
+      "331521794#1"
+    ],
+    "exclusive_alternative": [
+      "333713903#10",
+      "333713903#12",
+      "333713903#13",
+      "333713903#4",
+      "333713903#7",
+      "333713903#9",
+      "51835269#0",
+      "51835269#1",
+      "51835269#2",
+      "52238004#0",
+      "583996310#1",
+      "583996310#2",
+      "937427126"
+    ]
+  },
+  "design": {
+    "levels": {
+      "baixo": 30,
+      "medio": 90,
+      "alto": 180
+    },
+    "strategies": {
+      "principal": "Todos na Avenida Presidente Castelo Branco",
+      "um_desvio": "Um motorista na alternativa",
+      "todos_desvio": "Todos na alternativa",
+      "dividido": "Metade em cada rota",
+      "gps_dinamico": "GPS dinâmico, partida principal",
+      "um_quarto": "25% na alternativa",
+      "tres_quartos": "75% na alternativa"
+    },
+    "seeds": [
+      20261114,
+      20261115,
+      20261116
+    ],
+    "code_sha256_16": "5eba7e6ef878325f",
+    "sumo_version": "Eclipse SUMO sumo 1.28.0",
+    "departure_window_s": 240.0,
+    "max_time_s": 1800.0,
+    "physical_step_s": 0.25,
+    "capture_step_s": 5.0,
+    "focal_demand_index": 90,
+    "demand_rule": "30/90/180 partidas no mesmo intervalo; as menores são subconjuntos determinísticos das 180",
+    "gps": "15 s, ganho mínimo 5%, todos começam na rota principal",
+    "teleport": "desativado",
+    "weather": "sol",
+    "start_city_hour": "08:00",
+    "limitations": [
+      "Recorte central OSM, demanda sintética de um único par origem-destino",
+      "Saída de uma única via pode limitar inserção de veículos",
+      "Tempo médio e p95 usam apenas viagens concluídas; taxa de conclusão é apresentada separadamente",
+      "Três sementes fornecem intervalos de confiança exploratórios, não validação de tráfego real"
+    ]
+  },
+  "aggregates": [
+    {
+      "level": "alto",
+      "vehicles": 180,
+      "strategy": "um_quarto",
+      "strategy_label": "25% na alternativa",
+      "repetitions": 3,
+      "completed_total": 540,
+      "requested_total": 540,
+      "mean_travel_s": 236.18,
+      "mean_door_to_door_s": 254.24,
+      "mean_time_loss_s": 146.67,
+      "mean_waiting_s": 70.1,
+      "mean_depart_delay_s": 18.18,
+      "median_travel_s": 222.79,
+      "p95_travel_s": 359.25,
+      "max_travel_s": 414.92,
+      "mean_distance_m": 1226.11,
+      "completion_rate": 1.0,
+      "mean_queue_primary": 6.11,
+      "mean_queue_alternative": 1.8,
+      "peak_queue_primary": 24.67,
+      "peak_queue_alternative": 8.33,
+      "peak_pending_insertion": 30.67,
+      "reroutes": 0,
+      "focal_travel_s": 177.08,
+      "focal_door_to_door_s": 186.32,
+      "mean_travel_ci95_low": 232.58,
+      "mean_travel_ci95_high": 239.78
+    },
+    {
+      "level": "alto",
+      "vehicles": 180,
+      "strategy": "tres_quartos",
+      "strategy_label": "75% na alternativa",
+      "repetitions": 3,
+      "completed_total": 540,
+      "requested_total": 540,
+      "mean_travel_s": 247.08,
+      "mean_door_to_door_s": 283.25,
+      "mean_time_loss_s": 149.7,
+      "mean_waiting_s": 73.04,
+      "mean_depart_delay_s": 36.29,
+      "median_travel_s": 238.79,
+      "p95_travel_s": 358.98,
+      "max_travel_s": 388.0,
+      "mean_distance_m": 1303.39,
+      "completion_rate": 1.0,
+      "mean_queue_primary": 1.56,
+      "mean_queue_alternative": 3.37,
+      "peak_queue_primary": 13.33,
+      "peak_queue_alternative": 11.67,
+      "peak_pending_insertion": 42,
+      "reroutes": 0,
+      "focal_travel_s": 285.17,
+      "focal_door_to_door_s": 315.82,
+      "mean_travel_ci95_low": 245.19,
+      "mean_travel_ci95_high": 248.97
+    }
+  ],
+  "paired_vs_primary": []
+}

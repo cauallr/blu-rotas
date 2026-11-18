@@ -1,0 +1,3 @@
+﻿level,vehicles,strategy,strategy_label,repetitions,completed_total,requested_total,mean_travel_s,mean_door_to_door_s,mean_time_loss_s,mean_waiting_s,mean_depart_delay_s,median_travel_s,p95_travel_s,max_travel_s,mean_distance_m,completion_rate,mean_queue_primary,mean_queue_alternative,peak_queue_primary,peak_queue_alternative,peak_pending_insertion,reroutes,focal_travel_s,focal_door_to_door_s,mean_travel_ci95_low,mean_travel_ci95_high
+alto,180,um_quarto,25% na alternativa,3,540,540,236.18,254.24,146.67,70.1,18.18,222.79,359.25,414.92,1226.11,1.0,6.11,1.8,24.67,8.33,30.67,0,177.08,186.32,232.58,239.78
+alto,180,tres_quartos,75% na alternativa,3,540,540,247.08,283.25,149.7,73.04,36.29,238.79,358.98,388.0,1303.39,1.0,1.56,3.37,13.33,11.67,42,0,285.17,315.82,245.19,248.97
