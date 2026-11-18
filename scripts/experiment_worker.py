@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import time
 import traceback
@@ -21,7 +22,16 @@ from backend.storage import Storage  # noqa: E402
 def write_json(path: Path, value: dict):
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
-    temp.replace(path)
+    # On Windows, a brief concurrent read of status.json can prevent the
+    # atomic replacement. Keep the old complete file visible and retry.
+    for attempt in range(20):
+        try:
+            temp.replace(path)
+            return
+        except PermissionError as exc:
+            if os.name != "nt" or exc.winerror not in (5, 32) or attempt == 19:
+                raise
+            time.sleep(0.01 * (attempt + 1))
 
 
 def run_variant(job_dir: Path, config: dict, variant: dict, repetition: int,
