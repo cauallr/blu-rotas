@@ -1,6 +1,6 @@
 # BLU-ROTAS
 autores:
-cauã lucas leão rodrigues, Brayan Djonathan Duwe
+cauã lucas leão rodrigues, Brayan Djonathan Duwe, Wisler Clervil
 
 Simulador local de trânsito e laboratório científico para um recorte **real de Blumenau, SC**. A movimentação, os semáforos e as interações entre veículos são calculados pelo [Eclipse SUMO](https://eclipse.dev/sumo/); o navegador mostra estados recebidos por WebSocket e interpola a apresentação entre passos físicos. O projeto inclui frontend React/MapLibre, API FastAPI, GPS com Dijkstra, editor de rede SUMO, importação OSM e experimentos reproduzíveis.
 
