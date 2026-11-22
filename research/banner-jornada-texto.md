@@ -10,27 +10,27 @@ Brayan Duwe, Cauã Leão, Wisler Clervil e Taissa Katrine
 
 ## Introdução
 
-Você está atrasado e o GPS sugere um desvio. Se muitos motoristas recebem a mesma sugestão, a rua alternativa continua rápida? Investigamos quando o melhor caminho para uma pessoa deixa de ser a melhor decisão para todos.
+Aplicativos de navegação sugerem a rota de menor tempo estimado a cada motorista. Se muitos seguem a mesma indicação, o trânsito pode mudar. Objetivo: avaliar, por simulação no centro de Blumenau, como a distribuição de carros entre rotas afeta o tempo médio coletivo.
 
 ## Material e métodos
 
-Usamos a malha OSM do centro de Blumenau como grafo dirigido: 1.389 trechos e 1.708 conversões permitidas. Dijkstra estima a rota mais rápida; o SUMO 1.28 simula filas e semáforos. Mantivemos origem, destino, partidas e semente iguais. Testamos 30, 90 e 180 carros; na Beira-Rio, desviamos 0%, 25%, 50%, 75% ou 100%. São cenários sintéticos.
+Estudo experimental com recorte OSM do centro de Blumenau convertido em grafo dirigido (1.389 trechos; 1.708 conversões). Dijkstra calcula rotas; SUMO 1.28 registra cada viagem. Mantivemos origem, destino e partidas iguais. Na Beira-Rio, simulamos 180 carros em 240 s, com 0%, 25%, 50%, 75% ou 100% no desvio e três sementes pareadas. Analisamos o tempo médio da partida planejada à chegada.
 
 ## Resultados
 
-Beira-Rio (180 carros): tempo médio de 326,90 s sem desvio; 229,29 s com 50% (−29,9%); 389,82 s com 100% (+19,2%). Na Av. Brasil, dividir 50% elevou o tempo de 443,62 para 524,00 s. O efeito depende da rua.
+Beira-Rio (180 carros): média de 326,90 s com 0% no desvio; 229,29 s com 50% (−29,9%); 389,82 s com 100% (+19,2%). O excesso criou outro gargalo. Na Av. Brasil, dividir 50% elevou a média de 443,62 para 524,00 s.
 
-**Gráfico mantido:** Figura 1. Tempo médio por proporção desviada (180 veículos; 3 sementes). Fonte: simulações BLU-ROTAS / SUMO 1.28 (2026).
+**Gráfico mantido:** Figura 1 – Tempo médio por percentual de desvio na Beira-Rio (180 carros). Fonte: simulações BLU-ROTAS / SUMO 1.28 (2026).
 
 **Destaques mantidos:** 50% no desvio: −29,9% no tempo médio. 100% no desvio: +19,2% no tempo médio.
 
 ## Limitações e próximos testes
 
-Em 3 testes pareados, o grafo preferiu o desvio; em 2, o carro chegou depois. O algoritmo não prevê toda fila futura. São cenários sintéticos com 3 sementes. Para orientar Blumenau, faltam mais repetições e dados reais de fluxo e semáforos.
+Limitações: demanda sintética, três sementes e ausência de calibração com fluxos observados. Em teste complementar, o grafo preferiu o desvio nas três decisões, mas o carro chegou depois em duas. Próximo passo: repetir os cenários e validar fluxo e semáforos com dados reais.
 
 ## Conclusão
 
-Sim, neste modelo: mandar todos ao mesmo desvio pode piorar o tempo coletivo. Na Beira-Rio, distribuir parte ajudou; desviar todos criou outro gargalo. Na Av. Brasil, até dividir metade piorou a média. A melhor rota depende de quantos outros a escolhem: o algoritmo precisa considerar a rede inteira.
+Os resultados confirmam que recomendar o mesmo desvio a todos pode piorar o tempo médio coletivo. A hipótese de que distribuir parte ajuda foi confirmada na Beira-Rio, mas refutada na Av. Brasil. Portanto, a estratégia depende da via e da demanda; não há percentual universal.
 
 ## Fontes de conferência
 
