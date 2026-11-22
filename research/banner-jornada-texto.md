@@ -10,7 +10,7 @@ Brayan Duwe, Cauã Leão, Wisler Clervil e Taissa Katrine
 
 ## Introdução
 
-Aplicativos de navegação sugerem a rota de menor tempo estimado a cada motorista. Se muitos seguem a mesma indicação, o trânsito pode mudar. Objetivo: avaliar, por simulação no centro de Blumenau, como a distribuição de carros entre rotas afeta o tempo médio coletivo.
+Aplicativos de navegação sugerem rotas de menor tempo. Se muitos seguem a mesma indicação, o trânsito pode mudar. Objetivo: aplicar algoritmos de navegação e estudar grafos para avaliar, em simulação do centro de Blumenau, o efeito da distribuição de rotas no tempo médio coletivo.
 
 ## Material e métodos
 

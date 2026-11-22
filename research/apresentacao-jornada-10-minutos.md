@@ -15,7 +15,7 @@ O banner no Canva mantém o modelo visual da instituição. Ensaiem com ele impr
 >
 > Aplicativos de navegação recomendam a cada motorista o trajeto de menor tempo estimado. Porém, a recomendação também desloca veículos e pode alterar o tempo das ruas. Quando muitos recebem a mesma indicação, uma escolha vantajosa para uma pessoa pode não ser vantajosa para o conjunto. Daí surge nossa pergunta de pesquisa: **recomendar a mesma rota a todos pode piorar o trânsito coletivo?**
 >
-> Nosso **objetivo geral** foi avaliar, por simulação computacional em um recorte do centro de Blumenau, como diferentes formas de distribuir veículos entre a via principal e rotas alternativas afetam o tempo médio de viagem. Também investigamos uma decisão individual: quando o algoritmo prefere um desvio, ele resulta em chegada mais rápida?
+> Nosso **objetivo geral** foi aplicar algoritmos de navegação e estudar grafos na malha do centro de Blumenau. Com esse modelo, avaliamos por simulação como diferentes distribuições entre a via principal e rotas alternativas afetam o tempo médio coletivo. Também investigamos uma decisão individual: quando o algoritmo prefere um desvio, ele resulta em chegada mais rápida?
 >
 > A hipótese foi que distribuir **parte** do fluxo poderia reduzir o congestionamento quando a via principal estivesse carregada, enquanto enviar todos ao mesmo desvio poderia criar outro gargalo. Para testar isso, comparamos estratégias em diferentes níveis de demanda, mantendo as demais condições equivalentes. Nosso estudo usa demanda simulada: os números não são medições das ruas de Blumenau.
 >
@@ -25,7 +25,7 @@ O banner no Canva mantém o modelo visual da instituição. Ensaiem com ele impr
 
 **Apontar:** MATERIAL E MÉTODOS e o gráfico ao lado. Percorrer com o dedo a sequência **mapa → grafo → rota → trânsito**.
 
-> O mapa visível no jogo foi construído a partir de dados do OpenStreetMap. Para o algoritmo, ele se torna um **grafo dirigido**: nesta implementação, os 1.389 vértices representam trechos por onde os carros podem dirigir, e 1.708 ligações representam conversões permitidas. A direção importa: uma rota não pode atravessar uma conversão proibida ou seguir uma rua na contramão.
+> O mapa visível no jogo foi construído a partir de dados do OpenStreetMap. Para o algoritmo, ele se torna um **grafo dirigido**: nesta implementação, os 1.389 vértices representam trechos por onde os carros podem dirigir, e 1.708 ligações representam conversões permitidas. Assim estudamos conexões, sentidos e custos dos caminhos: uma conversão proibida não pode fazer parte da rota.
 >
 > Cada ligação recebe um custo de tempo. Dijkstra busca o caminho de menor custo estimado naquele instante. Para avaliar o que acontece **depois** da escolha, usamos o SUMO 1.28, que simula movimento, semáforos, filas e chegadas. Coletamos seus registros nativos de viagem, com horário de partida, chegada, duração e espera. Os resultados vêm desses registros, não da aparência da animação.
 >
@@ -61,7 +61,7 @@ O banner no Canva mantém o modelo visual da instituição. Ensaiem com ele impr
 >
 > Estes resultados não medem o trânsito real da cidade. Usamos demanda sintética, poucos pares origem e destino e três sementes por condição. Antes de sugerir uma medida à Prefeitura, precisaríamos calibrar o modelo com dados observados. Nosso próximo estudo é testar **quando** um desvio deixa de valer a pena e se o ganho de um motorista atrasa outros.
 >
-> O BLU-ROTAS nos permite mostrar a decisão no mapa, calcular a rota no grafo e medir sua consequência no simulador. Nossa principal resposta é esta: **a melhor rota de cada um pode deixar de ser a melhor decisão para todos quando todos a escolhem.**
+> Com o BLU-ROTAS, aplicamos algoritmos de navegação ao grafo, mostramos a decisão no mapa e medimos sua consequência no simulador. Nossa principal resposta é esta: **a melhor rota de cada um pode deixar de ser a melhor decisão para todos quando todos a escolhem.**
 
 ## Ensaio e conferência
 
