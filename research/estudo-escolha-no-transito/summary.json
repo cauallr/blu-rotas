@@ -1,0 +1,37 @@
+{
+  "design": {
+    "network_sha256_16": "633d9a0824eb0bb7",
+    "step_seconds": 0.25,
+    "departure_window_seconds": 240.0,
+    "background_policy": "all vehicles initially follow main route; focal changes only at shared approach edge",
+    "focal_demand_index": 90,
+    "weather": "sun",
+    "teleport": "disabled",
+    "max_sim_time_s": 1800.0,
+    "limitations": "synthetic single-OD demand; route choice tested at one approach edge; three seeds"
+  },
+  "summary": [
+    {
+      "corridor": "brasil",
+      "level": "alto",
+      "vehicles": 180,
+      "seeds": 3,
+      "mean_queue_ahead": 0,
+      "gps_recommended_divert_count": 0,
+      "mean_stay_remaining_s": 84.83,
+      "mean_divert_remaining_s": 74.5,
+      "mean_divert_minus_stay_s": -10.33
+    },
+    {
+      "corridor": "castelo",
+      "level": "alto",
+      "vehicles": 180,
+      "seeds": 3,
+      "mean_queue_ahead": 2.33,
+      "gps_recommended_divert_count": 3,
+      "mean_stay_remaining_s": 114.0,
+      "mean_divert_remaining_s": 109.75,
+      "mean_divert_minus_stay_s": -4.25
+    }
+  ]
+}

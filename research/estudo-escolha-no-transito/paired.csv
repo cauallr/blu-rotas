@@ -1,0 +1,7 @@
+﻿corridor,level,vehicles,seed,decision_time_s,queue_ahead,gps_estimate_stay_s,gps_estimate_divert_s,gps_prefers_divert,gps_path_matches_alternative,stay_remaining_s,divert_remaining_s,divert_minus_stay_s,stay_collective_mean_s,divert_collective_mean_s,pair_state_sha256_16
+brasil,alto,180,20261114,470.25,0,33.77,47.65,False,False,84.25,74.5,-9.75,443.0,444.54,3fb5830dcb02552f
+brasil,alto,180,20261115,470.5,0,33.89,47.77,False,False,84.0,74.5,-9.5,440.03,442.98,b0cd6f32a6af107c
+brasil,alto,180,20261116,472.0,0,33.86,47.58,False,False,86.25,74.5,-11.75,447.83,446.4,83c8b1d4271db461
+castelo,alto,180,20261114,226.5,4,123.55,44.25,True,True,158.0,108.5,-49.5,342.08,327.9,7a73060ff097d785
+castelo,alto,180,20261115,226.25,2,97.45,45.83,True,True,88.0,109.0,21.0,325.22,330.08,8dcdc6a273ba5d05
+castelo,alto,180,20261116,224.25,1,86.59,45.81,True,True,96.0,111.75,15.75,313.39,313.15,01dc41e6b24814c6
