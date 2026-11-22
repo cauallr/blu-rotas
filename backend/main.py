@@ -5,6 +5,7 @@ import asyncio
 import csv
 import io
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Literal
@@ -14,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from traci.exceptions import FatalTraCIError
 
 from .engine import STEP_SECONDS, Simulator, WEATHER
 from .experiments import ExperimentManager
@@ -42,6 +44,7 @@ EXPERIMENTS = ExperimentManager(ROOT, DATA_DIR)
 BASE_WAYS = {str(feature["properties"]["id"]) for feature in
              json.loads((DATA_DIR / "roads.geojson").read_text(encoding="utf-8"))["features"]} if (DATA_DIR / "roads.geojson").exists() else set()
 LOCK = asyncio.Lock()
+LOGGER = logging.getLogger(__name__)
 app = FastAPI(title="BLU-ROTAS", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=[os.environ.get("BLU_CORS_ORIGIN", "http://localhost:5173")],
                    allow_methods=["*"], allow_headers=["*"])
@@ -267,9 +270,16 @@ async def ticker():
                         SIM.step()
                     step_credit -= int(step_credit)
                     app.state.latest_snapshot = SIM.snapshot()
-                except Exception:
+                except Exception as exc:
                     SIM.running = False
-                    raise
+                    step_credit = 0.0
+                    app.state.latest_snapshot = None
+                    LOGGER.exception("Falha no avanço da simulação")
+                    if isinstance(exc, FatalTraCIError):
+                        try:
+                            SIM.stop()
+                        except (FatalTraCIError, OSError):
+                            LOGGER.exception("Falha ao encerrar a conexão com o SUMO")
             else:
                 step_credit = 0.0
         if clock.time() - next_tick > STEP_SECONDS * 4:
@@ -453,6 +463,9 @@ async def vehicle_style(vehicle_id: str, body: VehicleStyleBody):
 async def speed(body: SpeedBody):
     async with LOCK:
         SIM.speed = body.speed
+        cached = app.state.latest_snapshot
+        if cached is not None:
+            cached["speed"] = SIM.speed
         return {"speed": SIM.speed}
 
 

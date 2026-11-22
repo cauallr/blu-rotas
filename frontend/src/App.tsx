@@ -83,7 +83,11 @@ export default function App() {
     setBusy(true); setNotice('');
     try {
       const result = await request<Snapshot | Record<string, unknown>>(path, body || {});
-      if (path === '/speed' && typeof result.speed === 'number') setChosenSpeed(result.speed);
+      if (path === '/speed' && typeof result.speed === 'number') {
+        const speed = result.speed;
+        setChosenSpeed(speed);
+        setSnapshot(current => current ? { ...current, speed } : current);
+      }
       if ('connected' in result) setSnapshot(result as Snapshot);
       if (path === '/road' || /^\/vehicles\/[^/]+\/route$/.test(path)) setSnapshot(await request<Snapshot>('/status'));
       if (reload) await refreshNetwork();

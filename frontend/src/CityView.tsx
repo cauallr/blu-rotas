@@ -663,6 +663,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
         {[0.5, 1, 2, 5, 10].map(value => (
           <button key={value}
             aria-pressed={simulationSpeed === value}
+            disabled={busy}
             className={simulationSpeed === value && speedPulsing ? 'speed-pulsing' : undefined}
             onClick={() => act('/speed', { speed: value })}>{value}×</button>
         ))}
