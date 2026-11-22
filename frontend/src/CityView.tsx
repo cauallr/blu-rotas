@@ -6,7 +6,7 @@ import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Road, R
 
 type Act = (path: string, body?: object, reload?: boolean) => Promise<Snapshot | Record<string, unknown> | null>;
 type Props = { network: FeatureCollection; baseRoads: FeatureCollection; places: FeatureCollection;
-  snapshot: Snapshot | null; act: Act; busy: boolean; seed: number; theme: 'dark' | 'light'; setNotice: (message: string) => void;
+  snapshot: Snapshot | null; chosenSpeed: number | null; act: Act; busy: boolean; seed: number; theme: 'dark' | 'light'; setNotice: (message: string) => void;
   refreshCity: () => Promise<void> };
 type Pick = 'origin' | 'destination' | 'waypoint' | 'none';
 type Snapped = { coordinates: [number, number]; edge_id: string; name: string; position: number; distance_m: number };
@@ -24,7 +24,7 @@ const number = (value = 0, digits = 0) => Number(value).toLocaleString('pt-BR', 
 const statusNames: Record<string, string> = { moving: 'Em trânsito', congested: 'Preso no trânsito', at_signal: 'Parado no semáforo', departing: 'Saindo', arrived: 'Chegou' };
 const signalNames: Record<string, string> = { open: 'Verde', closed: 'Vermelho', attention: 'Amarelo', mixed: 'Misto' };
 
-export default function CityView({ network, baseRoads, places, snapshot, act, busy, seed, theme, setNotice, refreshCity }: Props) {
+export default function CityView({ network, baseRoads, places, snapshot, chosenSpeed, act, busy, seed, theme, setNotice, refreshCity }: Props) {
   const [tool, setTool] = useState('select');
   const [selection, setSelection] = useState<Selection>(null);
   const [roadSelection, setRoadSelection] = useState<Road | null>(null);
@@ -107,6 +107,8 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
 
   const active = Boolean(snapshot?.connected);
   const running = Boolean(snapshot?.running);
+  const simulationSpeed = snapshot?.speed ?? 1;
+  const speedPulsing = running && chosenSpeed === simulationSpeed && snapshot?.vehicles.some(vehicle => vehicle.speed > 0);
   const selected = useMemo<Selection>(() => {
     if (!selection || !snapshot) return selection;
     if (selection.kind === 'vehicle') {
@@ -655,7 +657,17 @@ export default function CityView({ network, baseRoads, places, snapshot, act, bu
       <button className="transport-button" disabled={!active || busy || running} title="Avançar um segundo" onClick={() => act('/step')}><Plus size={19} /></button></div>
       <div className="bar-divider" /><div className="time-readout"><small>TEMPO SIMULADO</small><strong>{duration(snapshot?.sim_time)}</strong></div>
       <div className="day-readout"><small>HORA DA CIDADE</small><strong>{clock(snapshot?.clock_hour ?? chosenHour())} {snapshot?.loop?.peak && snapshot.loop.enabled ? '· PICO' : ''}</strong></div>
-      <div className="bar-divider" /><div className="speed-group"><span>VELOCIDADE</span>{[0.5, 1, 2, 5].map(value => <button key={value} className={(snapshot?.speed || 1) === value ? 'selected' : ''} onClick={() => act('/speed', { speed: value })}>{value}×</button>)}</div>
+      <div className="bar-divider" />
+      <div className="speed-group" role="group" aria-label="Velocidade da simulação">
+        <span>VELOCIDADE</span>
+        {[0.5, 1, 2, 5, 10].map(value => (
+          <button key={value}
+            aria-pressed={simulationSpeed === value}
+            disabled={busy}
+            className={simulationSpeed === value && speedPulsing ? 'speed-pulsing' : undefined}
+            onClick={() => act('/speed', { speed: value })}>{value}×</button>
+        ))}
+      </div>
       <div className="bar-spacer" /><div className="bar-stat"><span className="stat-icon teal"><CarFront size={18} /></span><div><small>VEÍCULOS ATIVOS</small><strong>{number(snapshot?.active)}</strong></div></div>
       <div className="bar-stat"><span className="stat-icon amber"><Zap size={18} /></span><div><small>DESVIOS GPS</small><strong>{number(snapshot?.reroutes)}</strong></div></div></footer>
   </main>;

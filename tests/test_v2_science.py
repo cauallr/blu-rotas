@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from backend.experiment_analysis import compare, confidence_interval, interpret,
 from backend.experiment_report import csv_export, pdf_export
 from backend.experiments import ExperimentManager, deterministic_demand, focus_new_road_demand
 from backend.map_manager import MapManager
+from backend.scenario_network import ScenarioNetwork
 from backend.storage import Storage
 
 
@@ -77,22 +79,42 @@ def test_custom_variant_ids_cannot_escape_experiment_folder(tmp_path):
         manager._variants(spec, None)
 
 
+@pytest.mark.skipif(not os.environ.get("SUMO_BINARY") and not os.environ.get("NETCONVERT_BINARY")
+                    and not shutil.which("netconvert"), reason="netconvert indisponível")
 def test_new_road_demand_is_paired_and_uses_real_connection(tmp_path):
-    scenario_dir = Path("data/scenarios/8e6a547f53d8")
+    for name in ("blumenau-centro.osm.xml", "roads.geojson", "places.geojson"):
+        shutil.copy2(Path("data") / name, tmp_path / name)
+    features = json.loads((tmp_path / "roads.geojson").read_text(encoding="utf-8"))["features"]
+    origin, destination = features[:2]
+    origin_points = origin["geometry"]["coordinates"]
+    scenario = ScenarioNetwork(tmp_path).build([{
+        "origin_way": origin["properties"]["id"],
+        "destination_way": destination["properties"]["id"],
+        "origin_coordinates": origin_points[len(origin_points) // 2],
+        "destination_coordinates": destination["geometry"]["coordinates"][0],
+        "name": "Conexão experimental",
+        "oneway": False,
+        "speed_kmh": 60,
+        "lanes": 1,
+        "capacity_estimate": 900,
+        "hypothetical_cost": 100000,
+    }])
+    scenario_dir = tmp_path / "scenarios" / scenario["id"]
     source = Simulator("data", Storage(str(tmp_path / "source.sqlite3")))
     source.load_network()
     modified = Simulator(str(scenario_dir), Storage(str(tmp_path / "modified.sqlite3")))
     modified.net_path = scenario_dir / "network.net.xml"
     modified.load_network()
-    roads = json.loads((scenario_dir / "manifest.json").read_text(encoding="utf-8"))["roads"]
-    trips = deterministic_demand(source, 42, 8, 20, 112)
+    roads = scenario["roads"]
+    trip_budget = 300
+    trips = deterministic_demand(source, 42, 8, 20, trip_budget)
     original_departures = [(trip["id"], trip["departed"]) for trip in trips]
-    assert focus_new_road_demand(source, modified, roads, trips, 42, 112) == 2
+    assert focus_new_road_demand(source, modified, roads, trips, 42, trip_budget) == 2
     assert [(trip["id"], trip["departed"]) for trip in trips] == original_departures
     for trip in trips[:2]:
         first = modified.nearest_road(*trip["origin_coordinates"])["edge_id"]
         last = modified.nearest_road(*trip["destination_coordinates"])["edge_id"]
-        assert any("8000033445870992" in edge for edge in modified.route(first, last))
+        assert any(edge.lstrip("-").split("#")[0] == roads[0]["id"] for edge in modified.route(first, last))
 
 
 @pytest.mark.skipif(not os.environ.get("SUMO_BINARY"), reason="SUMO indisponível")

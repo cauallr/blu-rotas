@@ -159,8 +159,7 @@ class Simulator:
               tripinfo_output: str | None = None):
         if not self.net_path.exists():
             raise RuntimeError("Rede SUMO ausente. Execute scripts/build-network.ps1")
-        if self.connected:
-            traci.close()
+        self.stop()
         self.blocked.clear()
         self.load_network()
         binary = os.environ.get("SUMO_BINARY", "sumo")
@@ -232,8 +231,10 @@ class Simulator:
     def stop(self):
         self.running = False
         if self.connected:
-            traci.close()
-        self.connected = False
+            try:
+                traci.close()
+            finally:
+                self.connected = False
 
     def route(self, origin: str, destination: str, costs: dict | None = None) -> list[str]:
         if origin in self.blocked or destination in self.blocked:
@@ -809,6 +810,7 @@ class Simulator:
     def snapshot(self):
         if not self.connected:
             return {"ready": bool(self.net), "connected": False, "running": False,
+                    "speed": self.speed,
                     "error": None if self.net else "Rede SUMO ainda não construída"}
         ids = traci.vehicle.getIDList()
         vehicles = []
