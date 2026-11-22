@@ -232,7 +232,7 @@ class ScenarioNetwork:
                        "--geometry.remove", "--ramps.guess", "true", "--junctions.join", "true",
                        "--tls.guess", "true", "--tls.default-type", "static",
                        "--remove-edges.isolated", "true", "--no-turnarounds", "true"]
-            result = subprocess.run(command, capture_output=True, text=True, timeout=180)
+            result = subprocess.run(command, capture_output=True, encoding="utf-8", errors="replace", timeout=180)
             if result.returncode or not net_path.exists():
                 raise ValueError("netconvert não conseguiu construir a rua: " + (result.stderr or result.stdout)[-600:])
             net = sumolib.net.readNet(str(net_path), withInternal=True)

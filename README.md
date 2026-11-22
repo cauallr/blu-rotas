@@ -31,7 +31,7 @@ Se usar outra versão ou pasta do SUMO, ajuste `SUMO_BINARY`. Se o executável `
 
 ## Recriar a malha
 
-O recorte inicial vai de longitude −49,077 a −49,055 e latitude −26,928 a −26,906. Abrange Centro, Ponta Aguda e trechos próximos. Os arquivos OSM e SUMO já estão incluídos; para atualizar os dados:
+O mapa padrão inclui o Centro e trechos de bairros vizinhos, como Velha, Vila Nova, Victor Konder, Itoupava Seca, Bom Retiro, Ponta Aguda e Garcia. O recorte vai de longitude −49,101 a −49,048 e latitude −26,936 a −26,891. Os arquivos OSM e SUMO já acompanham o projeto. Para atualizar os dados:
 
 ```powershell
 node scripts\download-osm.mjs
@@ -39,7 +39,7 @@ node scripts\prepare-map.mjs
 .\scripts\build-network.ps1 -Netconvert "C:\SUMO\sumo-win64-1.28.0\bin\netconvert.exe"
 ```
 
-A API principal do OSM tem limite de nós por requisição. Um recorte municipal maior deve usar extratos OSM adequados e processamento em blocos. O `netconvert` pode emitir avisos sobre relações de transporte e restrições que atravessam a borda do recorte; a versão fornecida foi construída com sucesso. As arestas usadas pelo roteador são filtradas por permissões de automóvel nas faixas e nas conexões internas.
+O script baixa seis recortes do OSM e une os nós, vias e relações pelo identificador para respeitar o limite de nós por requisição. O `netconvert` pode emitir avisos sobre relações de transporte e restrições que atravessam a borda do recorte; a versão fornecida foi construída com sucesso. As arestas usadas pelo roteador são filtradas por permissões de automóvel nas faixas e nas conexões internas.
 
 ## Controles
 

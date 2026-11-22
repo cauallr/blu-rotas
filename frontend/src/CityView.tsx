@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, CarFront, Clock3, CloudRain, CloudSun, GitBranch, MapPin, MousePointer2, Pause, Play, Plus, RotateCcw, Route, Signal, SlidersHorizontal, TrafficCone, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import CityMap, { type MapPoint } from './CityMap';
 import HelpTip from './HelpTip';
-import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Road, RouteOption, Selection, Snapshot } from './types';
+import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Road, RoadNetwork, RouteOption, Selection, Snapshot } from './types';
 
 type Act = (path: string, body?: object, reload?: boolean) => Promise<Snapshot | Record<string, unknown> | null>;
-type Props = { network: FeatureCollection; baseRoads: FeatureCollection; places: FeatureCollection;
+type Props = { network: RoadNetwork; baseRoads: FeatureCollection; places: FeatureCollection;
   snapshot: Snapshot | null; chosenSpeed: number | null; act: Act; busy: boolean; seed: number; theme: 'dark' | 'light'; setNotice: (message: string) => void;
   refreshCity: () => Promise<void> };
 type Pick = 'origin' | 'destination' | 'waypoint' | 'none';
@@ -99,7 +99,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
   const [mapRegion, setMapRegion] = useState('');
   const [mapFile, setMapFile] = useState<File | null>(null);
   const [mapCrop, setMapCrop] = useState(false);
-  const [mapBounds, setMapBounds] = useState({ west: -49.077, south: -26.928, east: -49.055, north: -26.906 });
+  const [mapBounds, setMapBounds] = useState({ west: -49.101, south: -26.936, east: -49.048, north: -26.891 });
   const [mapImporting, setMapImporting] = useState(false);
   const previewOption = routeOptions.find(option => option.key === routeChoice);
   const previewRoute = previewOption?.route || [];

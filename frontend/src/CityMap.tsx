@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Light, Road, Selection, Snapshot, Vehicle } from './types';
+import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Light, Road, RoadNetwork, Selection, Snapshot, Vehicle } from './types';
+import { motionAlongLane } from './vehicleMotion';
 
 export type MapPoint = { coordinates: [number, number]; label: string; role: 'origin' | 'destination' | 'waypoint' };
 type Props = {
-  network: FeatureCollection; baseRoads: FeatureCollection; places: FeatureCollection;
+  network: RoadNetwork; baseRoads: FeatureCollection; places: FeatureCollection;
   snapshot: Snapshot | null; selection: Selection; selectedRoadId: string | null; tool: string;
   customPoints: MapPoint[]; previewRoute: string[];
   theme: 'light' | 'dark'; showRoute: boolean; showPreviousRoute: boolean;
@@ -26,6 +27,7 @@ type Props = {
 };
 const empty: FeatureCollection = { type: 'FeatureCollection', features: [] };
 const collection = (features: GeoJSON.Feature[]): FeatureCollection => ({ type: 'FeatureCollection', features });
+type VehiclePosition = { coordinates: [number, number]; lane?: string };
 const trafficColors = { red: '#fa6877', yellow: '#ffc06b', green: '#54dfbc' };
 const carPalette: [string, string][] = [['mint', '#4de1cc'], ['coral', '#f27e8b'], ['amber', '#f7c271'], ['blue', '#77a8ed'], ['violet', '#b995ef'], ['white', '#edf5f2']];
 function colorKey(value: string): string {
@@ -107,17 +109,20 @@ export default function CityMap(props: Props) {
   const map = useRef<MapLibreMap | null>(null);
   const animation = useRef<number | null>(null);
   const previous = useRef<{ time: number; runId: number }>({ time: -1, runId: -1 });
-  const rendered = useRef<Map<string, [number, number]>>(new Map());
+  const rendered = useRef(new Map<string, VehiclePosition>());
   const followLast = useRef<string | null>(null);
   const followStartedAt = useRef(0);
   const fittedCity = useRef<string | null | undefined>(undefined);
   const latest = useRef(props);
   latest.current = props;
+  const laneShapes = useMemo(() => new Map((props.network.lanes?.features || [])
+    .filter(lane => lane.id != null && lane.geometry.coordinates.length > 1)
+    .map(lane => [String(lane.id), lane.geometry.coordinates])), [props.network.lanes]);
 
   useEffect(() => {
     if (!container.current) return;
     const instance = new maplibregl.Map({ container: container.current,
-      center: [-49.066, -26.917], zoom: 14.3, minZoom: 11, maxZoom: 19,
+      center: [-49.0745, -26.9135], zoom: 14.3, minZoom: 11, maxZoom: 19,
       style: { version: 8, glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
         sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#101c25' } }] },
       attributionControl: false });
@@ -127,21 +132,32 @@ export default function CityMap(props: Props) {
     instance.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
     instance.on('load', () => {
       addTrafficIcons(instance);
-      for (const source of ['base', 'roads', 'places', 'vehicles', 'lights', 'signal-movements', 'signal-approaches', 'selected-movement', 'route', 'previous-route', 'route-pins', 'selected-car', 'congestion', 'blocked', 'partial', 'selected-road', 'hover-road', 'custom-route', 'custom-points', 'graph-vertices', 'graph-arcs', 'graph-path', 'graph-selected', 'access-points', 'build-preview', 'build-points']) {
+      for (const source of ['base', 'roads', 'lanes', 'places', 'vehicles', 'lights', 'signal-movements', 'signal-approaches', 'selected-movement', 'route', 'previous-route', 'route-pins', 'selected-car', 'congestion', 'blocked', 'partial', 'selected-road', 'hover-road', 'custom-route', 'custom-points', 'graph-vertices', 'graph-arcs', 'graph-path', 'graph-selected', 'access-points', 'build-preview', 'build-points']) {
         instance.addSource(source, { type: 'geojson', data: empty });
       }
       instance.addSource('vehicles-clusters', { type: 'geojson', data: empty, cluster: true, clusterRadius: 44, clusterMaxZoom: 14 });
       (instance.getSource('base') as maplibregl.GeoJSONSource).setData(latest.current.baseRoads);
-      (instance.getSource('roads') as maplibregl.GeoJSONSource).setData(latest.current.network);
+      (instance.getSource('roads') as maplibregl.GeoJSONSource).setData(collection(latest.current.network.features));
+      (instance.getSource('lanes') as maplibregl.GeoJSONSource).setData(latest.current.network.lanes || empty);
       (instance.getSource('places') as maplibregl.GeoJSONSource).setData(latest.current.places);
-      fitRoads(instance, latest.current.baseRoads);
-      fittedCity.current = latest.current.snapshot?.city_id;
+      if (latest.current.baseRoads.features.length) {
+        fitRoads(instance, latest.current.baseRoads);
+        fittedCity.current = latest.current.snapshot?.city_id ?? null;
+      }
       instance.addLayer({ id: 'road-casing', type: 'line', source: 'base', layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#29414b', 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.8, 17, 10] } });
       instance.addLayer({ id: 'road-surface', type: 'line', source: 'base', layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['case', ['boolean', ['get', 'fictional'], false], '#ac8de8', ['match', ['get', 'highway'], 'primary', '#688795', 'secondary', '#5f7e8a', 'trunk', '#71929c', '#526c77']], 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 17, 6] } });
       instance.addLayer({ id: 'bridge-accent', type: 'line', source: 'base', filter: ['==', ['get', 'bridge'], 'yes'],
         paint: { 'line-color': '#eabf78', 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 17, 2.5], 'line-opacity': 0.9 } });
+      instance.addLayer({ id: 'lane-surface', type: 'line', source: 'lanes', minzoom: 14.5, layout: { 'line-join': 'round' },
+        paint: {
+          'line-color': latest.current.theme === 'light' ? '#ffffff' : '#688795',
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0.55, 16, 1],
+          'line-width': ['interpolate', ['exponential', 2], ['zoom'], 14.5, 1,
+            16, ['*', ['number', ['get', 'width_m'], 3.2], 0.88],
+            19, ['*', ['number', ['get', 'width_m'], 3.2], 7.04]],
+        } });
       instance.addLayer({ id: 'congestion-lines', type: 'line', source: 'congestion', minzoom: 13,
         paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 13, 2, 17, 5], 'line-opacity': 0.8 } });
       instance.addLayer({ id: 'road-direction', type: 'symbol', source: 'roads', minzoom: 15.5,
@@ -199,14 +215,13 @@ export default function CityMap(props: Props) {
       instance.addLayer({ id: 'vehicles-distant', type: 'circle', source: 'vehicles-clusters', maxzoom: 14.5,
         filter: ['!', ['has', 'point_count']], paint: { 'circle-radius': 4, 'circle-color': ['get', 'color'],
           'circle-stroke-color': '#183037', 'circle-stroke-width': 1.5 } });
-      instance.addLayer({ id: 'vehicles-circle', type: 'circle', source: 'vehicles', minzoom: 14.5, maxzoom: 16,
-        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 4, 17, 8],
-          'circle-color': ['get', 'color'], 'circle-stroke-width': 2,
+      instance.addLayer({ id: 'vehicles-circle', type: 'circle', source: 'vehicles', minzoom: 14.5, maxzoom: 17,
+        paint: { 'circle-radius': 3,
+          'circle-color': ['get', 'color'], 'circle-stroke-width': 1,
           'circle-stroke-color': ['match', ['get', 'state'], 'at_signal', '#ffc06b', 'congested', '#fa6877', '#132a2e'] } });
-      instance.addLayer({ id: 'vehicles-heading', type: 'symbol', source: 'vehicles', minzoom: 15, maxzoom: 16,
-        layout: { 'text-field': '▲', 'text-size': 11, 'text-rotate': ['get', 'angle'], 'text-allow-overlap': true }, paint: { 'text-color': '#103238' } });
-      instance.addLayer({ id: 'vehicles-car', type: 'symbol', source: 'vehicles', minzoom: 16,
-        layout: { 'icon-image': ['concat', 'car-', ['get', 'colorKey']], 'icon-size': ['interpolate', ['linear'], ['zoom'], 16, 0.65, 19, 1.2], 'icon-rotate': ['get', 'angle'], 'icon-rotation-alignment': 'map', 'icon-allow-overlap': true } });
+      instance.addLayer({ id: 'vehicles-car', type: 'symbol', source: 'vehicles', minzoom: 17,
+        layout: { 'icon-image': ['concat', 'car-', ['get', 'colorKey']], 'icon-size': ['interpolate', ['exponential', 2], ['zoom'], 17, 0.25, 19, 1],
+          'icon-anchor': 'top', 'icon-rotate': ['get', 'angle'], 'icon-rotation-alignment': 'map', 'icon-allow-overlap': true } });
       instance.addLayer({ id: 'selected-car-halo', type: 'circle', source: 'selected-car',
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 9, 17, 17], 'circle-color': '#ffffff', 'circle-opacity': 0.08, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 } });
       instance.addLayer({ id: 'route-pins-circle', type: 'circle', source: 'route-pins',
@@ -326,11 +341,15 @@ export default function CityMap(props: Props) {
 
   useEffect(() => { (map.current?.getSource('base') as maplibregl.GeoJSONSource | undefined)?.setData(props.baseRoads); }, [props.baseRoads]);
   useEffect(() => {
-    if (!map.current?.getSource('base') || fittedCity.current === props.snapshot?.city_id) return;
+    const cityId = props.snapshot?.city_id ?? null;
+    if (!map.current?.getSource('base') || !props.baseRoads.features.length || fittedCity.current === cityId) return;
     fitRoads(map.current, props.baseRoads);
-    fittedCity.current = props.snapshot?.city_id;
+    fittedCity.current = cityId;
   }, [props.snapshot?.city_id, props.baseRoads]);
-  useEffect(() => { (map.current?.getSource('roads') as maplibregl.GeoJSONSource | undefined)?.setData(props.network); }, [props.network]);
+  useEffect(() => {
+    (map.current?.getSource('roads') as maplibregl.GeoJSONSource | undefined)?.setData(collection(props.network.features));
+    (map.current?.getSource('lanes') as maplibregl.GeoJSONSource | undefined)?.setData(props.network.lanes || empty);
+  }, [props.network]);
   useEffect(() => {
     const instance = map.current;
     if (!props.routePulseToken || !instance?.getLayer('route-line')) return;
@@ -353,6 +372,7 @@ export default function CityMap(props: Props) {
     instance.setPaintProperty('background', 'background-color', light ? '#e5eceb' : '#101c25');
     instance.setPaintProperty('road-casing', 'line-color', light ? '#b1c6c8' : '#29414b');
     instance.setPaintProperty('road-surface', 'line-color', light ? ['case', ['boolean', ['get', 'fictional'], false], '#ad8fe8', '#ffffff'] : ['case', ['boolean', ['get', 'fictional'], false], '#ac8de8', ['match', ['get', 'highway'], 'primary', '#688795', 'secondary', '#5f7e8a', 'trunk', '#71929c', '#526c77']]);
+    instance.setPaintProperty('lane-surface', 'line-color', light ? '#ffffff' : '#688795');
     instance.setPaintProperty('road-labels', 'text-color', light ? '#46616a' : '#9db5bb');
     instance.setPaintProperty('road-labels', 'text-halo-color', light ? '#ffffff' : '#101c25');
     instance.setPaintProperty('places-labels', 'text-color', light ? '#415f66' : '#a4c1c0');
@@ -370,39 +390,52 @@ export default function CityMap(props: Props) {
     if (!instance?.getSource('vehicles')) return;
     const vehicles = (props.snapshot?.vehicles || []).map(vehicle => ({ type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: vehicle.coordinates },
-      properties: { id: vehicle.id, state: vehicle.state, angle: vehicle.angle, color: vehicle.color || '#4de1cc', colorKey: colorKey(vehicle.color || '#4de1cc') } }));
+      properties: { id: vehicle.id, lane: vehicle.lane_id, state: vehicle.state, angle: vehicle.angle, color: vehicle.color || '#4de1cc', colorKey: colorKey(vehicle.color || '#4de1cc') } }));
     for (const vehicle of vehicles) addCarImage(instance, vehicle.properties.colorKey, vehicle.properties.color);
     (instance.getSource('vehicles-clusters') as maplibregl.GeoJSONSource).setData(collection(vehicles));
     const source = instance.getSource('vehicles') as maplibregl.GeoJSONSource;
-    if (props.snapshot && (props.snapshot.sim_time !== previous.current.time || props.snapshot.run_id !== previous.current.runId)) {
+    if (!props.snapshot?.connected) {
+      if (animation.current !== null) cancelAnimationFrame(animation.current);
+      source.setData(empty);
+      rendered.current.clear();
+      previous.current = { time: -1, runId: -1 };
+    } else if (props.snapshot.sim_time !== previous.current.time || props.snapshot.run_id !== previous.current.runId) {
       if (animation.current !== null) cancelAnimationFrame(animation.current);
       const reset = props.snapshot.run_id !== previous.current.runId || props.snapshot.sim_time < previous.current.time;
-      const from = reset ? new Map<string, [number, number]>() : rendered.current;
       const start = performance.now();
       const elapsedSim = Math.max(0, props.snapshot.sim_time - previous.current.time);
       const frameMs = props.snapshot.running ? Math.max(80, Math.min(550, elapsedSim * 1000 / Math.max(0.25, props.snapshot.speed))) : 0;
+      const trajectories = vehicles.map(feature => {
+        const from = reset ? undefined : rendered.current.get(feature.properties.id);
+        const lane = feature.properties.lane;
+        const shape = lane && from?.lane === lane ? laneShapes.get(lane) : undefined;
+        // Na troca de faixa, a posição confirmada pelo SUMO mantém o carro sobre a pista.
+        return frameMs && shape && from ? motionAlongLane(shape, from.coordinates, feature.geometry.coordinates) : null;
+      });
       const frame = (now: number) => {
         const fraction = frameMs ? Math.min(1, (now - start) / frameMs) : 1;
-        const positions = new Map<string, [number, number]>();
-        const features = vehicles.map(feature => {
-          const target = feature.geometry.coordinates, initial = from.get(feature.properties.id) || target;
-          const coordinates: [number, number] = [initial[0] + (target[0] - initial[0]) * fraction,
-            initial[1] + (target[1] - initial[1]) * fraction];
-          positions.set(feature.properties.id, coordinates);
-          return { ...feature, geometry: { type: 'Point' as const, coordinates } };
+        const positions = new Map<string, VehiclePosition>();
+        const features = vehicles.map((feature, index) => {
+          const position = trajectories[index]?.(fraction);
+          const coordinates = position?.coordinates || feature.geometry.coordinates;
+          positions.set(feature.properties.id, { coordinates, lane: feature.properties.lane });
+          return position ? { ...feature, geometry: { type: 'Point' as const, coordinates },
+            properties: { ...feature.properties, angle: position.angle } } : feature;
         });
         rendered.current = positions;
         source.setData(collection(features));
         const follow = latest.current.followVehicleId;
-        if (follow && positions.has(follow) && now - followStartedAt.current > 600) instance.setCenter(positions.get(follow)!);
+        const followedPosition = follow ? positions.get(follow) : undefined;
+        if (followedPosition && now - followStartedAt.current > 600) instance.setCenter(followedPosition.coordinates);
         const selectedId = latest.current.selection?.kind === 'vehicle' ? latest.current.selection.value.id : null;
-        (instance.getSource('selected-car') as maplibregl.GeoJSONSource).setData(selectedId && positions.has(selectedId)
-          ? collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: positions.get(selectedId)! }, properties: {} }]) : empty);
+        const selectedPosition = selectedId ? positions.get(selectedId) : undefined;
+        (instance.getSource('selected-car') as maplibregl.GeoJSONSource).setData(selectedPosition
+          ? collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: selectedPosition.coordinates }, properties: {} }]) : empty);
         if (fraction < 1) animation.current = requestAnimationFrame(frame);
       };
       animation.current = requestAnimationFrame(frame);
       previous.current = { time: props.snapshot.sim_time, runId: props.snapshot.run_id };
-    } else if (!props.snapshot) { source.setData(empty); rendered.current.clear(); previous.current = { time: -1, runId: -1 }; }
+    }
     const lights = (props.snapshot?.lights || []).map(light => ({ type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: light.coordinates },
       properties: { id: light.id, aspect: light.aspect } }));
@@ -426,13 +459,17 @@ export default function CityMap(props: Props) {
     const features = props.network.features;
     const activeRoute = props.selection?.kind === 'vehicle' ? props.selection.value.route : [];
     const previousRoute = props.selection?.kind === 'vehicle' ? props.selection.value.previous_route : [];
-    const filtered = (ids: string[]) => collection(features.filter(feature => ids.includes(String(feature.properties?.id))));
+    const filtered = (ids: string[]) => {
+      if (!ids.length) return empty;
+      const wanted = new Set(ids);
+      return collection(features.filter(feature => wanted.has(String(feature.properties?.id))));
+    };
     (instance.getSource('route') as maplibregl.GeoJSONSource).setData(filtered(props.showRoute ? activeRoute : []));
     (instance.getSource('previous-route') as maplibregl.GeoJSONSource).setData(filtered(props.showPreviousRoute ? previousRoute : []));
     const selectedVehicle = props.selection?.kind === 'vehicle' ? props.selection.value : null;
     const selectedPosition = selectedVehicle && rendered.current.get(selectedVehicle.id);
     (instance.getSource('selected-car') as maplibregl.GeoJSONSource).setData(selectedPosition
-      ? collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: selectedPosition }, properties: {} }]) : empty);
+      ? collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: selectedPosition.coordinates }, properties: {} }]) : empty);
     (instance.getSource('route-pins') as maplibregl.GeoJSONSource).setData(selectedVehicle && props.showRoute
       ? collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: selectedVehicle.origin_coordinates }, properties: { role: 'origin', label: 'Partida' } },
           { type: 'Feature', geometry: { type: 'Point', coordinates: selectedVehicle.destination_coordinates }, properties: { role: 'destination', label: 'Destino' } }]) : empty);
@@ -449,7 +486,7 @@ export default function CityMap(props: Props) {
     (instance.getSource('selected-road') as maplibregl.GeoJSONSource).setData(filtered(props.selectedRoadId ? [props.selectedRoadId] : []));
     (instance.getSource('custom-points') as maplibregl.GeoJSONSource).setData(collection(props.customPoints.map(point => ({
       type: 'Feature', geometry: { type: 'Point', coordinates: point.coordinates }, properties: { role: point.role, label: point.label } }))));
-  }, [props.snapshot, props.selection, props.selectedRoadId, props.network, props.customPoints, props.previewRoute, props.showRoute, props.showPreviousRoute]);
+  }, [props.snapshot, props.selection, props.selectedRoadId, props.network, props.customPoints, props.previewRoute, props.showRoute, props.showPreviousRoute, laneShapes]);
   useEffect(() => {
     const instance = map.current;
     if (!instance?.getSource('graph-vertices')) return;

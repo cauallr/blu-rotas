@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const data = path.resolve(import.meta.dirname, '../data');
+const data = path.resolve(process.argv[2] || path.join(import.meta.dirname, '../data'));
 const xml = fs.readFileSync(path.join(data, 'blumenau-centro.osm.xml'), 'utf8');
 const nodes = new Map();
 const places = [];

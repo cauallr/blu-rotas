@@ -12,6 +12,8 @@ from uuid import uuid4
 
 import sumolib
 
+from .engine import BLUMENAU_NETWORK_VERSION
+
 
 DRIVING = {"motorway", "trunk", "primary", "secondary", "tertiary", "unclassified",
            "residential", "living_street", "service", "motorway_link", "trunk_link",
@@ -88,9 +90,9 @@ class MapManager:
         return json.loads(path.read_text(encoding="utf-8"))
 
     def list(self) -> list[dict]:
-        base = {"id": None, "name": "Blumenau central", "region": "Centro e arredores",
-                "source": "OpenStreetMap", "bounds": [-49.077, -26.928, -49.055, -26.906],
-                "network_version": "blumenau-original"}
+        base = {"id": None, "name": "Blumenau central", "region": "Centro e bairros vizinhos",
+                "source": "OpenStreetMap", "bounds": [-49.101, -26.936, -49.048, -26.891],
+                "network_version": BLUMENAU_NETWORK_VERSION}
         imported = []
         for file in self.root.glob("*/manifest.json"):
             try:
@@ -118,7 +120,7 @@ class MapManager:
                 "--geometry.remove", "--ramps.guess", "true", "--junctions.join", "true",
                 "--tls.guess", "true", "--tls.default-type", "static",
                 "--remove-edges.isolated", "true", "--no-turnarounds", "true"],
-                capture_output=True, text=True, timeout=300)
+                capture_output=True, encoding="utf-8", errors="replace", timeout=300)
             if result.returncode or not net_path.exists():
                 raise ValueError("netconvert falhou: " + (result.stderr or result.stdout)[-700:])
             net = sumolib.net.readNet(str(net_path), withInternal=True)

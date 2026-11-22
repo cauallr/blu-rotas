@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from traci.exceptions import FatalTraCIError
 
-from .engine import STEP_SECONDS, Simulator, WEATHER
+from .engine import BLUMENAU_NETWORK_VERSION, STEP_SECONDS, Simulator, WEATHER
 from .experiments import ExperimentManager
 from .experiment_analysis import compare as compare_experiment_runs
 from .experiment_report import csv_export, pdf_export
@@ -676,7 +676,7 @@ def activate_urban_network(scenario_id: str | None):
     SIM.data_dir, SIM.net_path = target_dir, net_path
     try:
         SIM.network_version = (manifest["network_version"] if manifest else
-            (MAPS.get(SIM.city_id)["network_version"] if SIM.city_id else "blumenau-original"))
+            (MAPS.get(SIM.city_id)["network_version"] if SIM.city_id else BLUMENAU_NETWORK_VERSION))
         SIM.network_scenario_id = scenario_id
         SIM.start(seed, start_hour)
         return {"scenario": manifest, "snapshot": SIM.snapshot()}
@@ -868,7 +868,7 @@ def activate_city(city_id: str | None):
     SIM.stop()
     SIM.data_dir, SIM.net_path = target, net_path
     SIM.city_id, SIM.city_name = city_id, manifest["name"] if manifest else "Blumenau central"
-    SIM.network_version = manifest["network_version"] if manifest else "blumenau-original"
+    SIM.network_version = manifest["network_version"] if manifest else BLUMENAU_NETWORK_VERSION
     SIM.network_scenario_id = None
     URBAN = ScenarioNetwork(target)
     BASE_WAYS = {str(feature["properties"]["id"]) for feature in
