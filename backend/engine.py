@@ -25,6 +25,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v1"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -79,7 +80,7 @@ class Simulator:
         self.signal_links: dict[str, list[dict]] = {}
         self.loop_enabled = False
         self.city_start_hour = 6.0
-        self.network_version = "blumenau-original"
+        self.network_version = BLUMENAU_NETWORK_VERSION
         self.network_scenario_id = None
         self.city_id = None
         self.city_name = "Blumenau central"
