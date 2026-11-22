@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, BarChart3, CarFront, CircleHelp, Download, Fla
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import CityView from './CityView';
 import SimulationsPage from './SimulationsPage';
-import type { FeatureCollection, Snapshot } from './types';
+import type { FeatureCollection, RoadNetwork, Snapshot } from './types';
 
 const API = '/api';
 const empty: FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -24,7 +24,7 @@ export default function App() {
   const [tab, setTab] = useState<'city' | 'simulations' | 'science' | 'lab'>('city');
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [fullscreen, setFullscreen] = useState(Boolean(document.fullscreenElement));
-  const [network, setNetwork] = useState<FeatureCollection>(empty);
+  const [network, setNetwork] = useState<RoadNetwork>(empty);
   const [baseRoads, setBaseRoads] = useState<FeatureCollection>(empty);
   const [places, setPlaces] = useState<FeatureCollection>(empty);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -55,7 +55,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    request<FeatureCollection>('/network').then(setNetwork).catch(e => setNotice(e.message));
+    request<RoadNetwork>('/network').then(setNetwork).catch(e => setNotice(e.message));
     request<FeatureCollection>('/roads/base').then(setBaseRoads).catch(e => setNotice(e.message));
     request<FeatureCollection>('/places').then(setPlaces).catch(() => {});
     request<Snapshot>('/status').then(setSnapshot).catch(e => setNotice(e.message));
@@ -71,10 +71,10 @@ export default function App() {
     return () => { closed = true; clearTimeout(retry); socket?.close(); };
   }, []);
 
-  const refreshNetwork = useCallback(() => request<FeatureCollection>('/network').then(setNetwork), []);
+  const refreshNetwork = useCallback(() => request<RoadNetwork>('/network').then(setNetwork), []);
   const refreshCity = useCallback(async () => {
     const [roads, base, neighborhoods] = await Promise.all([
-      request<FeatureCollection>('/network'), request<FeatureCollection>('/roads/base'), request<FeatureCollection>('/places')]);
+      request<RoadNetwork>('/network'), request<FeatureCollection>('/roads/base'), request<FeatureCollection>('/places')]);
     setNetwork(roads); setBaseRoads(base); setPlaces(neighborhoods);
   }, []);
   const [chosenSpeed, setChosenSpeed] = useState<number | null>(null);

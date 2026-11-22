@@ -806,7 +806,22 @@ class Simulator:
                                             "length": round(edge.getLength(), 1),
                                             "speed_kmh": round(edge.getSpeed() * 3.6, 1),
                                             "lanes": len(edge.getLanes())}})
-        return {"type": "FeatureCollection", "features": features}
+        lanes = []
+        for edge in self.net.getEdges():
+            if edge.getID() not in self.edges and edge.getFunction() != "internal":
+                continue
+            for lane in edge.getLanes():
+                if not lane.allows("passenger"):
+                    continue
+                shape = lane.getShape()
+                if len(shape) < 2:
+                    continue
+                lanes.append({"type": "Feature", "id": lane.getID(),
+                              "geometry": {"type": "LineString", "coordinates": [
+                                  self.net.convertXY2LonLat(x, y) for x, y in shape]},
+                              "properties": {"width_m": lane.getWidth() if lane.getWidth() > 0 else 3.2}})
+        return {"type": "FeatureCollection", "features": features,
+                "lanes": {"type": "FeatureCollection", "features": lanes}}
 
     def snapshot(self):
         if not self.connected:
@@ -830,6 +845,7 @@ class Simulator:
             vehicles.append({**info, "coordinates": [lon, lat],
                              "speed": speed,
                              "angle": traci.vehicle.getAngle(vehicle_id),
+                             "lane_id": traci.vehicle.getLaneID(vehicle_id),
                              "road": road,
                              "eta_city_hour": city_hour(self.city_start_hour, info["predicted_arrival_sim_time"])
                              if info.get("predicted_arrival_sim_time") is not None else None,
