@@ -61,3 +61,30 @@
 @media(max-width:1100px){.simulation-intro{grid-template-columns:1fr}.simulation-intro>div{min-height:0}.tool-tray{width:46px}.tool-tray button{justify-content:center;padding:0}.tool-tray button span{display:none}.map-tip{left:80px}}
 @media(max-width:760px){.city-layout.panel-compact{grid-template-columns:minmax(0,1fr)}.city-layout.panel-hidden{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 74px}.city-layout.panel-hidden .sim-bar{grid-row:2}.panel-map-controls{right:10px;bottom:12px}.panel-map-controls button span{display:none}.map-tip{left:70px;max-width:200px}.simulation-guide{align-items:flex-start;flex-wrap:wrap}.simulation-guide a{margin-left:32px}.topbar .identity{min-width:0}.topbar .logo{font-size:16px}}
 @media(max-width:500px){.study-brief{grid-template-columns:1fr}}
+
+.sim-bar .speed-group {
+  flex-shrink: 0;
+}
+
+.app-shell[data-theme] .sim-bar .speed-group button {
+  border: 2px solid #29454e;
+}
+
+.app-shell[data-theme] .speed-group button[aria-pressed="true"] {
+  background: #5be0c9;
+  color: #092724;
+}
+
+@keyframes speed-pulse {
+  50% { background-color: #a9f5e8; box-shadow: 0 0 0 2px #5be0c966; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .speed-group .speed-pulsing { animation: speed-pulse 1s ease-in-out infinite; }
+}
+
+@media (max-width: 520px) {
+  .sim-bar { flex-wrap: wrap; align-content: center; row-gap: 4px; }
+  .sim-bar .transport button { width: 34px; height: 32px; }
+  .sim-bar .speed-group { flex-basis: 100%; justify-content: center; }
+}

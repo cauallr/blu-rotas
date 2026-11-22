@@ -79,7 +79,7 @@ class SpawnBody(BaseModel):
 
 
 class SpeedBody(BaseModel):
-    speed: float = Field(1, ge=0.25, le=5)
+    speed: float = Field(1, ge=0.25, le=10)
 
 
 class WeatherBody(BaseModel):
