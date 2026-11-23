@@ -17,6 +17,7 @@ from .graphs import Graph
 from .route_choices import alternatives
 from .storage import Storage
 from .telemetry import city_hour, remaining_route_metrics
+from .traffic_signals import load_simulated_signals
 
 
 WEATHER = {
@@ -25,7 +26,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
-BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v2"
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v3"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -78,6 +79,7 @@ class Simulator:
         self.spawn_credit = 0.0
         self.last_sample_at = 0.0
         self.signal_links: dict[str, list[dict]] = {}
+        self.simulated_signals: dict[str, str] = {}
         self.loop_enabled = False
         self.city_start_hour = 6.0
         self.network_version = BLUMENAU_NETWORK_VERSION
@@ -102,6 +104,7 @@ class Simulator:
 
     def load_network(self):
         self.net = sumolib.net.readNet(str(self.net_path), withInternal=True)
+        self.simulated_signals = load_simulated_signals(self.data_dir)
         places_path = self.data_dir / "places.geojson"
         roads_path = self.data_dir / "roads.geojson"
         self.places = json.loads(places_path.read_text(encoding="utf-8"))["features"] if places_path.exists() else []
@@ -876,6 +879,7 @@ class Simulator:
             for movement in movements:
                 movement["show_approach"] = len(lane_aspects[movement["incoming_lane"]]) == 1
             lights.append({"id": tls_id, "coordinates": coordinates,
+                           "simulated_neighborhood": self.simulated_signals.get(tls_id),
                            "state": signal_state, "aspect": aspect, "counts": counts,
                            "movements": movements,
                            "phase": traci.trafficlight.getPhase(tls_id),
