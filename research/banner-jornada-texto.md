@@ -14,11 +14,11 @@ Aplicativos de navegação sugerem rotas de menor tempo. Se muitos seguem a mesm
 
 ## Material e métodos
 
-Estudo experimental com recorte OSM do centro de Blumenau convertido em grafo dirigido (1.389 trechos; 1.708 conversões). Dijkstra calcula rotas; SUMO 1.28 registra cada viagem. Mantivemos origem, destino e partidas iguais. Na Beira-Rio, simulamos 180 carros em 240 s, com 0%, 25%, 50%, 75% ou 100% no desvio e três sementes pareadas. Analisamos o tempo médio da partida planejada à chegada.
+Mapa: recorte OSM do centro convertido em grafo dirigido (1.389 trechos; 1.708 conversões). Rota: Dijkstra estima o menor tempo. Trânsito: SUMO 1.28 simula carros, filas e semáforos e registra cada viagem. Teste: 180 carros em 240 s na Beira-Rio, com 0%, 25%, 50%, 75% ou 100% no desvio; três sementes, mesma origem, destino e partidas. Análise: tempo médio da partida planejada à chegada.
 
 ## Resultados
 
-Beira-Rio (180 carros): média de 326,90 s com 0% no desvio; 229,29 s com 50% (−29,9%); 389,82 s com 100% (+19,2%). O excesso criou outro gargalo. Na Av. Brasil, dividir 50% elevou a média de 443,62 para 524,00 s.
+Todos no desvio? Beira-Rio: 326,90 s (0%) → 389,82 s (100%): piorou. Dividir ajuda? Com 50%, caiu a 229,29 s (−29,9%). Sempre? Não: na Av. Brasil, 50% elevou a média de 443,62 a 524,00 s.
 
 **Gráfico mantido:** Figura 1 – Tempo médio por percentual de desvio na Beira-Rio (180 carros). Fonte: simulações BLU-ROTAS / SUMO 1.28 (2026).
 
@@ -30,7 +30,7 @@ Limitações: demanda sintética, três sementes e ausência de calibração com
 
 ## Conclusão
 
-Os resultados confirmam que recomendar o mesmo desvio a todos pode piorar o tempo médio coletivo. A hipótese de que distribuir parte ajuda foi confirmada na Beira-Rio, mas refutada na Av. Brasil. Portanto, a estratégia depende da via e da demanda; não há percentual universal.
+Os objetivos foram atendidos no modelo: grafos dirigidos e Dijkstra calcularam rotas; o SUMO mediu as viagens. Enviar todos ao mesmo desvio piorou a média; distribuir parte ajudou na Beira-Rio, mas não na Av. Brasil. A estratégia depende da rede e da demanda.
 
 ## Fontes de conferência
 

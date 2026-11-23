@@ -418,6 +418,14 @@ def main() -> None:
     output = (args.output or ROOT.parent / ("estudo-rotas-coletivas" if args.corridor == "brasil"
                                            else "estudo-castelo-branco")).resolve()
     (output / "runs").mkdir(parents=True, exist_ok=True)
+    previous_routes = output / "routes.json"
+    if previous_routes.exists():
+        previous_hash = json.loads(previous_routes.read_text(encoding="utf-8")).get("network_sha256_16")
+        current_hash = hashlib.sha256((ROOT / "data" / "blumenau.net.xml").read_bytes()).hexdigest()[:16]
+        if previous_hash != current_hash:
+            parser.error(f"A pasta {output} contém resultados da malha {previous_hash}, mas a malha atual "
+                         f"é {current_hash}. Escolha outra pasta --output ou use a tag "
+                         "study-rotas-malha-633d9a08 para reproduzir os resultados publicados.")
     route = route_definition()
     write_json(output / "routes.json", route)
     runs = [run_one(output, route, level, strategy, seed)

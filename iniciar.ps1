@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $venvPython = Join-Path $projectRoot '.venv\Scripts\python.exe'
+$venvSumo = Join-Path $projectRoot '.venv\Scripts\sumo.exe'
 $portablePython = Join-Path $projectRoot '..\..\work\python-embed\python.exe'
 $portableSumo = Join-Path $projectRoot '..\..\work\sumo\sumo-win64-1.28.0\bin\sumo.exe'
 
@@ -23,6 +24,9 @@ if (-not $SumoBinary -and (Test-Path -LiteralPath $portableSumo)) {
 if (-not $SumoBinary) {
     $installedSumo = Get-Command sumo.exe -ErrorAction SilentlyContinue
     if ($installedSumo) { $SumoBinary = $installedSumo.Source }
+}
+if (-not $SumoBinary -and (Test-Path -LiteralPath $venvSumo)) {
+    $SumoBinary = $venvSumo
 }
 if (-not $SumoBinary -or -not (Test-Path -LiteralPath $SumoBinary)) {
     throw 'SUMO não encontrado. Defina $env:SUMO_BINARY com o caminho completo de sumo.exe; veja README.md.'
@@ -69,3 +73,6 @@ Write-Host "BLU-ROTAS: servidor em http://127.0.0.1:$Port/" -ForegroundColor Cya
 Write-Host "Abra este endereço no navegador: http://127.0.0.1:$Port/" -ForegroundColor Green
 Write-Host 'Deixe esta janela aberta enquanto usa o jogo. Ctrl+C encerra o servidor.'
 & $pythonExecutable -m uvicorn backend.main:app --host 127.0.0.1 --port $Port
+if ($LASTEXITCODE -ne 0) {
+    throw "O servidor encerrou com o código $LASTEXITCODE."
+}

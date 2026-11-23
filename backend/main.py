@@ -5,6 +5,7 @@ import asyncio
 import csv
 import io
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Literal
@@ -14,8 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from traci.exceptions import FatalTraCIError
 
-from .engine import STEP_SECONDS, Simulator, WEATHER
+from .engine import BLUMENAU_NETWORK_VERSION, STEP_SECONDS, Simulator, WEATHER
 from .experiments import ExperimentManager
 from .experiment_analysis import compare as compare_experiment_runs
 from .experiment_report import csv_export, pdf_export
@@ -42,6 +44,7 @@ EXPERIMENTS = ExperimentManager(ROOT, DATA_DIR)
 BASE_WAYS = {str(feature["properties"]["id"]) for feature in
              json.loads((DATA_DIR / "roads.geojson").read_text(encoding="utf-8"))["features"]} if (DATA_DIR / "roads.geojson").exists() else set()
 LOCK = asyncio.Lock()
+LOGGER = logging.getLogger(__name__)
 app = FastAPI(title="BLU-ROTAS", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=[os.environ.get("BLU_CORS_ORIGIN", "http://localhost:5173")],
                    allow_methods=["*"], allow_headers=["*"])
@@ -79,7 +82,7 @@ class SpawnBody(BaseModel):
 
 
 class SpeedBody(BaseModel):
-    speed: float = Field(1, ge=0.25, le=5)
+    speed: float = Field(1, ge=0.25, le=10)
 
 
 class WeatherBody(BaseModel):
@@ -267,9 +270,16 @@ async def ticker():
                         SIM.step()
                     step_credit -= int(step_credit)
                     app.state.latest_snapshot = SIM.snapshot()
-                except Exception:
+                except Exception as exc:
                     SIM.running = False
-                    raise
+                    step_credit = 0.0
+                    app.state.latest_snapshot = None
+                    LOGGER.exception("Falha no avanço da simulação")
+                    if isinstance(exc, FatalTraCIError):
+                        try:
+                            SIM.stop()
+                        except (FatalTraCIError, OSError):
+                            LOGGER.exception("Falha ao encerrar a conexão com o SUMO")
             else:
                 step_credit = 0.0
         if clock.time() - next_tick > STEP_SECONDS * 4:
@@ -453,6 +463,9 @@ async def vehicle_style(vehicle_id: str, body: VehicleStyleBody):
 async def speed(body: SpeedBody):
     async with LOCK:
         SIM.speed = body.speed
+        cached = app.state.latest_snapshot
+        if cached is not None:
+            cached["speed"] = SIM.speed
         return {"speed": SIM.speed}
 
 
@@ -663,7 +676,7 @@ def activate_urban_network(scenario_id: str | None):
     SIM.data_dir, SIM.net_path = target_dir, net_path
     try:
         SIM.network_version = (manifest["network_version"] if manifest else
-            (MAPS.get(SIM.city_id)["network_version"] if SIM.city_id else "blumenau-original"))
+            (MAPS.get(SIM.city_id)["network_version"] if SIM.city_id else BLUMENAU_NETWORK_VERSION))
         SIM.network_scenario_id = scenario_id
         SIM.start(seed, start_hour)
         return {"scenario": manifest, "snapshot": SIM.snapshot()}
@@ -855,7 +868,7 @@ def activate_city(city_id: str | None):
     SIM.stop()
     SIM.data_dir, SIM.net_path = target, net_path
     SIM.city_id, SIM.city_name = city_id, manifest["name"] if manifest else "Blumenau central"
-    SIM.network_version = manifest["network_version"] if manifest else "blumenau-original"
+    SIM.network_version = manifest["network_version"] if manifest else BLUMENAU_NETWORK_VERSION
     SIM.network_scenario_id = None
     URBAN = ScenarioNetwork(target)
     BASE_WAYS = {str(feature["properties"]["id"]) for feature in

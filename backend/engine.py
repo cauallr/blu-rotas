@@ -17,6 +17,7 @@ from .graphs import Graph
 from .route_choices import alternatives
 from .storage import Storage
 from .telemetry import city_hour, remaining_route_metrics
+from .traffic_signals import load_simulated_signals
 
 
 WEATHER = {
@@ -25,6 +26,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v3"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -77,9 +79,10 @@ class Simulator:
         self.spawn_credit = 0.0
         self.last_sample_at = 0.0
         self.signal_links: dict[str, list[dict]] = {}
+        self.simulated_signals: dict[str, str] = {}
         self.loop_enabled = False
         self.city_start_hour = 6.0
-        self.network_version = "blumenau-original"
+        self.network_version = BLUMENAU_NETWORK_VERSION
         self.network_scenario_id = None
         self.city_id = None
         self.city_name = "Blumenau central"
@@ -101,6 +104,7 @@ class Simulator:
 
     def load_network(self):
         self.net = sumolib.net.readNet(str(self.net_path), withInternal=True)
+        self.simulated_signals = load_simulated_signals(self.data_dir)
         places_path = self.data_dir / "places.geojson"
         roads_path = self.data_dir / "roads.geojson"
         self.places = json.loads(places_path.read_text(encoding="utf-8"))["features"] if places_path.exists() else []
@@ -159,8 +163,7 @@ class Simulator:
               tripinfo_output: str | None = None):
         if not self.net_path.exists():
             raise RuntimeError("Rede SUMO ausente. Execute scripts/build-network.ps1")
-        if self.connected:
-            traci.close()
+        self.stop()
         self.blocked.clear()
         self.load_network()
         binary = os.environ.get("SUMO_BINARY", "sumo")
@@ -200,11 +203,12 @@ class Simulator:
         self.tls_coordinates = {tls: list(self.net.convertXY2LonLat(*self.net.getNode(tls).getCoord()))
                                 for tls in self.tls_original if self.net.hasNode(tls)}
         self.signal_links = {}
-        for tls_id in traci.trafficlight.getIDList():
+        for tls_id in self.tls_original:
             movements = []
             seen_lanes: dict[str, int] = defaultdict(int)
+            controlled_nodes = {}
             for index, connections in enumerate(traci.trafficlight.getControlledLinks(tls_id)):
-                for incoming_id, outgoing_id, _ in connections:
+                for link_index, (incoming_id, outgoing_id, _) in enumerate(connections):
                     if not incoming_id or not outgoing_id:
                         continue
                     incoming = self.net.getLane(incoming_id)
@@ -220,20 +224,28 @@ class Simulator:
                     approach = lane_tail(shape, min(15, incoming.getLength() * 0.9))
                     in_edge = incoming.getEdge()
                     out_edge = outgoing.getEdge()
-                    movements.append({"id": f"{tls_id}:{index}:{slot}", "index": index,
+                    junction = in_edge.getToNode()
+                    controlled_nodes[junction.getID()] = junction.getCoord()
+                    movements.append({"id": f"{tls_id}:{index}:{link_index}", "index": index,
                                       "incoming_lane": incoming_id, "outgoing_lane": outgoing_id,
                                       "incoming_road": in_edge.getName() or self.osm_names.get(in_edge.getID().lstrip('-').split('#')[0], "Via sem nome"),
                                       "outgoing_road": out_edge.getName() or self.osm_names.get(out_edge.getID().lstrip('-').split('#')[0], "Via sem nome"),
                                       "coordinates": list(self.net.convertXY2LonLat(*marker)),
                                       "approach": [list(self.net.convertXY2LonLat(*xy)) for xy in approach]})
+            if tls_id not in self.tls_coordinates and controlled_nodes:
+                x = sum(point[0] for point in controlled_nodes.values()) / len(controlled_nodes)
+                y = sum(point[1] for point in controlled_nodes.values()) / len(controlled_nodes)
+                self.tls_coordinates[tls_id] = list(self.net.convertXY2LonLat(x, y))
             self.signal_links[tls_id] = movements
         return self.snapshot()
 
     def stop(self):
         self.running = False
         if self.connected:
-            traci.close()
-        self.connected = False
+            try:
+                traci.close()
+            finally:
+                self.connected = False
 
     def route(self, origin: str, destination: str, costs: dict | None = None) -> list[str]:
         if origin in self.blocked or destination in self.blocked:
@@ -804,11 +816,27 @@ class Simulator:
                                             "length": round(edge.getLength(), 1),
                                             "speed_kmh": round(edge.getSpeed() * 3.6, 1),
                                             "lanes": len(edge.getLanes())}})
-        return {"type": "FeatureCollection", "features": features}
+        lanes = []
+        for edge in self.net.getEdges():
+            if edge.getID() not in self.edges and edge.getFunction() != "internal":
+                continue
+            for lane in edge.getLanes():
+                if not lane.allows("passenger"):
+                    continue
+                shape = lane.getShape()
+                if len(shape) < 2:
+                    continue
+                lanes.append({"type": "Feature", "id": lane.getID(),
+                              "geometry": {"type": "LineString", "coordinates": [
+                                  self.net.convertXY2LonLat(x, y) for x, y in shape]},
+                              "properties": {"width_m": lane.getWidth() if lane.getWidth() > 0 else 3.2}})
+        return {"type": "FeatureCollection", "features": features,
+                "lanes": {"type": "FeatureCollection", "features": lanes}}
 
     def snapshot(self):
         if not self.connected:
             return {"ready": bool(self.net), "connected": False, "running": False,
+                    "speed": self.speed,
                     "error": None if self.net else "Rede SUMO ainda não construída"}
         ids = traci.vehicle.getIDList()
         vehicles = []
@@ -827,6 +855,7 @@ class Simulator:
             vehicles.append({**info, "coordinates": [lon, lat],
                              "speed": speed,
                              "angle": traci.vehicle.getAngle(vehicle_id),
+                             "lane_id": traci.vehicle.getLaneID(vehicle_id),
                              "road": road,
                              "eta_city_hour": city_hour(self.city_start_hour, info["predicted_arrival_sim_time"])
                              if info.get("predicted_arrival_sim_time") is not None else None,
@@ -850,6 +879,7 @@ class Simulator:
             for movement in movements:
                 movement["show_approach"] = len(lane_aspects[movement["incoming_lane"]]) == 1
             lights.append({"id": tls_id, "coordinates": coordinates,
+                           "simulated_neighborhood": self.simulated_signals.get(tls_id),
                            "state": signal_state, "aspect": aspect, "counts": counts,
                            "movements": movements,
                            "phase": traci.trafficlight.getPhase(tls_id),

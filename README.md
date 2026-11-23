@@ -1,6 +1,6 @@
 # BLU-ROTAS
 autores:
-cauã lucas leão rodrigues, Brayan Djonathan Duwe
+cauã lucas leão rodrigues, Brayan Djonathan Duwe, Wisler Clervil
 
 Simulador local de trânsito e laboratório científico para um recorte **real de Blumenau, SC**. A movimentação, os semáforos e as interações entre veículos são calculados pelo [Eclipse SUMO](https://eclipse.dev/sumo/); o navegador mostra estados recebidos por WebSocket e interpola a apresentação entre passos físicos. O projeto inclui frontend React/MapLibre, API FastAPI, GPS com Dijkstra, editor de rede SUMO, importação OSM e experimentos reproduzíveis.
 
@@ -31,7 +31,7 @@ Se usar outra versão ou pasta do SUMO, ajuste `SUMO_BINARY`. Se o executável `
 
 ## Recriar a malha
 
-O recorte inicial vai de longitude −49,077 a −49,055 e latitude −26,928 a −26,906. Abrange Centro, Ponta Aguda e trechos próximos. Os arquivos OSM e SUMO já estão incluídos; para atualizar os dados:
+O mapa padrão inclui o Centro e trechos de bairros vizinhos, como Velha, Vila Nova, Victor Konder, Itoupava Seca, Bom Retiro, Ponta Aguda e Garcia. O recorte vai de longitude −49,101 a −49,048 e latitude −26,936 a −26,891. Os arquivos OSM e SUMO já acompanham o projeto. Para atualizar os dados:
 
 ```powershell
 node scripts\download-osm.mjs
@@ -39,7 +39,11 @@ node scripts\prepare-map.mjs
 .\scripts\build-network.ps1 -Netconvert "C:\SUMO\sumo-win64-1.28.0\bin\netconvert.exe"
 ```
 
-A API principal do OSM tem limite de nós por requisição. Um recorte municipal maior deve usar extratos OSM adequados e processamento em blocos. O `netconvert` pode emitir avisos sobre relações de transporte e restrições que atravessam a borda do recorte; a versão fornecida foi construída com sucesso. As arestas usadas pelo roteador são filtradas por permissões de automóvel nas faixas e nas conexões internas.
+O script baixa seis recortes do OSM e une os nós, vias e relações pelo identificador para respeitar o limite de nós por requisição. O `netconvert` pode emitir avisos sobre relações de transporte e restrições que atravessam a borda do recorte; a versão fornecida foi construída com sucesso. As arestas usadas pelo roteador são filtradas por permissões de automóvel nas faixas e nas conexões internas.
+
+A malha importa os semáforos do OpenStreetMap e reúne focos mapeados nas aproximações de um mesmo cruzamento quando o SUMO identifica o controlador comum. O mapa exibe o estado por faixa depois de iniciar o SUMO. A conferência com publicações municipais inclui Humberto de Campos com Alberto Stein (Velha), Almirante Tamandaré com Marechal Deodoro (Vila Nova), Antônio da Veiga com Max Hering (Victor Konder) e Engenheiro Paul Werner com Pernambuco (Itoupava Seca). Os ciclos exibidos são calculados pelo SUMO para a simulação. [Prefeitura de Blumenau — cruzamentos e sinalização](https://blumenau.sc.gov.br/secao/noticias/134510) · [Prefeitura de Blumenau — modernização semafórica](https://www.blumenau.sc.gov.br/secao/noticias/26721) · [Estudo técnico municipal](https://www.blumenau.sc.gov.br/secao/fiscalizacao-eletronica-smtt%26download%3D9846f4408a3496292415a5888ee0d3a9)
+
+Todos os 12 bairros identificados no mapa têm pelo menos um semáforo. Onde faltava cobertura, a malha passou a incluir controladores simulados em cruzamentos viários da Boa Vista, Bom Retiro, Ribeirão Fresco e dos trechos de Água Verde, Do Salto e Vila Formosa. O painel identifica esses pontos como **Semáforo simulado** e exibe o bairro. Os locais foram conferidos com a [camada de bairros da Prefeitura de Blumenau](https://geo.blumenau.sc.gov.br/server/rest/services/Limites/Bairros/MapServer).
 
 ## Controles
 
@@ -64,7 +68,7 @@ A API principal do OSM tem limite de nós por requisição. Um recorte municipal
 - **Gerenciar mapas:** importe arquivo OSM XML local, opcionalmente com recorte por coordenadas, para criar uma cidade/área independente. A importação de Blumenau inteira exige fornecer o arquivo OSM e memória/tempo suficientes; o pacote inclui o recorte central original.
 - **Laboratório científico:** em **Modo Ciência**, execute A GPS, B semáforos, C saturação, D obras, E estrada nova, F clima ou variantes próprias. Modos rápido e visual usam a mesma física SUMO. Veja resultados por veículo, via e cenário, compare duas execuções, repita com mesma semente/demanda, assista a replay de snapshots reais e exporte CSV, JSON ou PDF. Viagens não concluídas permanecem na contagem. Veja [modelo e metodologia](docs/modelo-2.0.md) para variáveis, métricas e limites.
 - **Estudo de rotas coletivas:** o protocolo em [docs/estudo-rotas-coletivas.md](docs/estudo-rotas-coletivas.md) reproduz as comparações “todos na avenida”, “um motorista alternativo”, “todos alternativos”, “metade em cada rota” e “GPS dinâmico” em três níveis de demanda e três sementes, usando o mesmo SUMO. Os scripts geram tabelas CSV, dados brutos e gráficos de tempo, ocupação e calor da rede.
-- **Resultados já calculados:** [relatório acadêmico](research/relatorio-estudo-rotas.md), CSVs, gráficos SVG e saídas nativas do SUMO estão em `research/`. Os bancos SQLite locais não são necessários para reproduzir as tabelas publicadas.
+- **Resultados já calculados:** [relatório acadêmico](research/relatorio-estudo-rotas.md), CSVs, gráficos SVG e saídas nativas do SUMO estão em `research/`. Os bancos SQLite locais não são necessários para reproduzir as tabelas publicadas. Esses resultados usam a malha anterior, SHA-256 `633d9a0824eb0bb7`, preservada na tag Git `study-rotas-malha-633d9a08`. A malha padrão expandida usa SHA-256 `191ebe927ab14c60` e deve ser tratada como outro cenário experimental; não atribua a ela os números do banner sem repetir os testes.
 - **Decisão do motorista na bifurcação:** [estudo pareado de ficar ou desviar](research/perguntas-gps-e-grafos.md) compara a previsão do grafo com o percurso físico e a chegada em dois corredores, com arquivos TripInfo nativos e script de reprodução.
 - **Clima:** sol, chuva fraca ou intensa aplicam fatores experimentais de velocidade, aceleração, desaceleração e tempo de segurança nos veículos do SUMO.
 - **Ciência:** amostras, viagens concluídas, intervenções, gráficos e exportação CSV vêm do SQLite. Um cenário salvo registra semente, pares origem/destino, horário de partida, GPS, clima, obras e fases modificadas; pode ser reexecutado.

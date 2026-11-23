@@ -7,7 +7,7 @@
 
 O banner no Canva mantém o modelo visual da instituição. Ensaiem com ele impresso ou projetado; ninguém precisa ler as caixas literalmente.
 
-## 1. Introdução — integrante 1 — 0:00 a 2:00
+## 1. Introdução — integrante 1 — 0:00 a 1:50
 
 **Apontar:** título e INTRODUÇÃO, na coluna esquerda.
 
@@ -21,51 +21,55 @@ O banner no Canva mantém o modelo visual da instituição. Ensaiem com ele impr
 >
 > Agora vamos apresentar os materiais, a coleta dos dados e o papel dos grafos no experimento.
 
-## 2. Material e métodos — integrante 2 — 2:00 a 4:30
+## 2. Material e métodos — integrante 2 — 1:50 a 4:45
 
-**Apontar:** MATERIAL E MÉTODOS e o gráfico ao lado. Percorrer com o dedo a sequência **mapa → grafo → rota → trânsito**.
+**Apontar:** MATERIAL E MÉTODOS. Percorrer com o dedo a sequência **mapa → grafo → rota → trânsito → medida**.
 
-> O mapa visível no jogo foi construído a partir de dados do OpenStreetMap. Para o algoritmo, ele se torna um **grafo dirigido**: nesta implementação, os 1.389 vértices representam trechos por onde os carros podem dirigir, e 1.708 ligações representam conversões permitidas. Assim estudamos conexões, sentidos e custos dos caminhos: uma conversão proibida não pode fazer parte da rota.
+> Fizemos o estudo em cinco etapas. **Primeiro, o mapa.** Importamos um recorte do OpenStreetMap do centro de Blumenau e o transformamos em um **grafo dirigido**. Nele, 1.389 vértices representam trechos dirigíveis e 1.708 ligações representam conversões permitidas. Assim, o algoritmo respeita o sentido das ruas e não atravessa uma conversão proibida.
 >
-> Cada ligação recebe um custo de tempo. Dijkstra busca o caminho de menor custo estimado naquele instante. Para avaliar o que acontece **depois** da escolha, usamos o SUMO 1.28, que simula movimento, semáforos, filas e chegadas. Coletamos seus registros nativos de viagem, com horário de partida, chegada, duração e espera. Os resultados vêm desses registros, não da aparência da animação.
+> **Segundo, a rota.** O algoritmo de Dijkstra procura no grafo o caminho de menor tempo estimado. Esse custo considera as velocidades observadas na simulação. O cálculo indica qual trajeto parece melhor **naquele instante**; ele não antecipa perfeitamente as filas que surgirão depois.
 >
-> Fizemos comparações em dois corredores, com demanda baixa, média e alta: 30, 90 e 180 veículos programados em quatro minutos. Mantivemos as mesmas origens, destinos, partidas, rede e sementes aleatórias quando mudávamos a estratégia. O estudo principal teve 72 execuções físicas e 7.200 viagens concluídas. No teste que aparece neste gráfico, focamos na Beira-Rio: com 180 carros, enviamos 0%, 25%, 50%, 75% ou 100% ao desvio, repetindo cada condição com três sementes.
+> **Terceiro, o trânsito.** Atribuímos as rotas aos carros, e o SUMO 1.28 simula o deslocamento físico, semáforos, filas e chegadas. Comparamos dois corredores e três níveis de demanda: 30, 90 e 180 carros programados em quatro minutos. No estudo principal foram 72 execuções e 7.200 viagens concluídas.
 >
-> Calculamos, para cada condição, a média do tempo entre **partida planejada e chegada**. Incluímos a espera para entrar na rede, que também afeta o motorista. Comparamos as médias entre estratégias e observamos o comportamento da fila. A **Figura 1** apresenta os cinco percentuais testados na Beira-Rio.
+> **Quarto, a comparação.** Para este gráfico, usamos 180 carros na Beira-Rio e atribuímos 0%, 25%, 50%, 75% ou 100% à alternativa. Mudamos apenas essa proporção: malha, origem, destino e horários de partida permaneceram iguais. Repetimos cada condição com três sementes aleatórias, para comparar cenários equivalentes.
 >
-> Testamos ainda uma decisão individual no cruzamento. Mantivemos todos os carros em estados idênticos até aquele instante e mudamos só a rota de um. Verificamos que ele realmente percorreu o desvio.
+> Na prática, geramos a mesma lista de veículos para cada comparação: cada carro tinha origem, destino e instante planejado de partida. A condição experimental determinava quais deles seguiriam a alternativa. Conferimos que todas as viagens solicitadas foram concluídas antes de calcular as médias.
+>
+> **Quinto, a medida.** Extraímos os registros nativos de cada viagem do SUMO. Calculamos a média entre a **partida planejada e a chegada**, incluindo a espera para entrar na rede. A Figura 1 mostra essa medida e, separadamente, o tempo apenas dentro da rede. Para a pergunta individual, repetimos o estado de todos os carros até uma bifurcação, mudamos apenas a rota de um e verificamos que ele realmente percorreu o desvio.
 
-## 3. Resultados — integrante 3 — 4:30 a 7:30
+## 3. Resultados — integrante 3 — 4:45 a 7:45
 
-**Apontar:** RESULTADOS, depois o ponto mais baixo do gráfico e, por último, o ponto de 100%. Dar uma pausa após cada comparação.
+**Apontar:** RESULTADOS e a Figura 1. Indicar 0%, 50% e 100% no gráfico; depois apontar para LIMITAÇÕES E PRÓXIMOS TESTES ao falar da decisão individual.
 
-> A **Figura 1** apresenta o tempo médio de viagem conforme o percentual de carros enviados ao desvio da Beira-Rio. Com 180 veículos, a média foi **326,90 segundos** quando todos ficaram na principal. Ao enviar metade para a alternativa, caiu para **229,29 segundos**: **97,60 segundos a menos por viagem**, redução de **29,9%** neste cenário.
+> Na Figura 1, a linha da partida planejada à chegada inclui a espera para entrar na rede; é ela que usamos nas comparações a seguir. A outra linha mede apenas o tempo após a entrada.
 >
-> Poderíamos parar aqui e recomendar: “mandem todos para o desvio”. Nós testamos isso. Com 100% desviados, a média subiu para **389,82 segundos**: **19,2% pior** do que manter todos na principal. A espera média para conseguir entrar na rede passou de **18,20** para **74,43 segundos**. A fila não desapareceu. O gargalo migrou. Entre os cinco percentuais que testamos, **50% foi o melhor**, mas isso não significa que 50% seja um número mágico para toda rua.
+> **Primeira pergunta: mandar todos ao mesmo desvio pode piorar o trânsito?** Sim, neste cenário. Na Beira-Rio, com 180 carros, deixar todos na principal produziu média de **326,90 segundos**. Enviar todos à alternativa elevou a média para **389,82 segundos**, ou **19,2% a mais**. A espera média para conseguir entrar na rede também subiu de **18,20** para **74,43 segundos**. O desvio ficou sobrecarregado: o gargalo mudou de lugar.
 >
-> Para conferir, olhamos a Avenida Brasil com a mesma demanda alta. Ali, dividir metade dos carros **piorou** o tempo médio, de **443,62** para **524,00 segundos**. Ou seja: até a regra que ajudou a Beira-Rio falhou em outro corredor. A resposta depende da geometria, da capacidade, dos semáforos e de quantos outros carros escolhem cada rota.
+> **Segunda pergunta: distribuir parte dos carros ajuda?** Na mesma Beira-Rio, sim. Com metade no desvio, a média caiu para **229,29 segundos**. São **97,60 segundos a menos por viagem**, ou **29,9%** abaixo de deixar todos na principal. A Figura 1 mostra que 50% foi o menor resultado **entre cinco percentuais testados**. Não sabemos se algum percentual intermediário seria ainda melhor.
 >
-> Fizemos também a pergunta que um motorista faria ao volante: **“o GPS sugeriu sair da avenida; vale a pena?”** Em três testes pareados na Beira-Rio, o grafo preferiu o desvio nas três vezes. Na simulação física, desviar economizou **49,5 segundos** uma vez, mas causou atrasos de **21** e **15,75 segundos** nas outras duas. Essa pequena amostra não demonstra que desviar geralmente é ruim. Ela mostra uma falha possível da previsão: a rota mais barata no momento da escolha pode não ser a mais rápida até a chegada.
+> Mas **dividir sempre ajuda?** Não. Na Avenida Brasil, também com 180 carros, a divisão pela metade aumentou a média de **443,62** para **524,00 segundos**. A política que melhorou um corredor piorou outro. Isso mostra por que uma regra única, como “desvie metade”, não resolve toda a rede.
 >
-> Então há dois efeitos dominó: muitos carros podem saturar uma alternativa; e o trânsito futuro pode inverter uma recomendação individual. Meu colega fecha explicando o que esses resultados respondem e o que ainda não respondem.
+> **Terceira pergunta: se o algoritmo sugere desviar no meio da viagem, devo seguir?** A resposta variou. Em três pares de testes na Beira-Rio, o grafo preferiu o desvio. O carro que desviou economizou **49,5 segundos** uma vez, mas chegou **21** e **15,75 segundos depois** nas outras duas. Como são apenas três pares, não podemos dizer que desviar costuma ser ruim. Podemos dizer que o melhor custo calculado no cruzamento nem sempre produziu a chegada mais rápida.
+>
+> Os três resultados respondem ao tema sem um número mágico: a decisão depende de quantos carros vão pela mesma rua, do corredor e do trânsito que surge depois da escolha.
 
-## 4. Conclusão — integrante 4 — 7:30 a 10:00
+## 4. Conclusão — integrante 4 — 7:45 a 10:00
 
 **Apontar:** CONCLUSÃO, depois LIMITAÇÕES E PRÓXIMOS TESTES. Encerrar olhando para o público, sem ler o banner.
 
-> Retomando o objetivo do trabalho: **a distribuição de rotas altera o tempo médio coletivo?** Sim, nos cenários simulados. Confirmamos também que enviar todos ao mesmo desvio **pode piorar** a média: isso ocorreu na Beira-Rio. A hipótese de que dividir parte do fluxo ajuda foi sustentada nesse corredor, mas **não** na Avenida Brasil, onde dividir pela metade aumentou o tempo médio.
+> Retomando nossos **dois objetivos**, aplicamos grafos dirigidos e Dijkstra para calcular caminhos possíveis e seus tempos estimados. Depois, usamos o SUMO para observar as consequências dessas escolhas. Assim, conseguimos estudar os algoritmos de navegação e responder à pergunta sobre o trânsito coletivo dentro do modelo.
 >
-> O que aprendemos sobre grafos é que o peso de uma rota não é uma propriedade fixa do mapa. Quando outros motoristas escolhem aquela rota, a fila muda e o peso muda junto. O algoritmo influencia o sistema que ele está tentando otimizar. A pergunta deixa de ser apenas **“qual é o menor caminho para mim?”** e passa a ser **“como a escolha oferecida a muitos carros altera a rede inteira?”**
+> **A recomendação igual para todos pode piorar o trânsito?** Sim, nos cenários simulados: na Beira-Rio, todos no desvio ficaram mais lentos que todos na principal. A hipótese de que dividir parte do fluxo ajuda foi sustentada nesse corredor, mas não na Avenida Brasil. Portanto, a distribuição precisa considerar a rede e a demanda; 50% não é um percentual universal.
 >
-> No teste individual, aplicamos as rotas fisicamente no cruzamento. Não afirmamos que um aplicativo comercial ou o GPS automático do jogo errou. O modelo usa velocidades observadas agora, mas não conhece com precisão as filas e fases semafóricas futuras.
+> O estudo de grafos também revelou uma limitação do cálculo: o custo de uma rota pode mudar quando outros motoristas a escolhem. O algoritmo usa condições observadas no presente, mas não prevê perfeitamente todas as filas e fases semafóricas futuras. No teste individual, aplicamos as rotas fisicamente; não atribuímos o resultado ao GPS automático do jogo ou a um aplicativo comercial.
 >
-> Estes resultados não medem o trânsito real da cidade. Usamos demanda sintética, poucos pares origem e destino e três sementes por condição. Antes de sugerir uma medida à Prefeitura, precisaríamos calibrar o modelo com dados observados. Nosso próximo estudo é testar **quando** um desvio deixa de valer a pena e se o ganho de um motorista atrasa outros.
+> Esses dados ainda não descrevem o trânsito real de Blumenau. A demanda foi sintética e houve apenas três sementes por condição. Antes de sugerir uma intervenção à Prefeitura, precisaríamos calibrar o simulador com fluxos e semáforos observados. O próximo experimento pode investigar quando um desvio deixa de compensar e se o ganho de um motorista prejudica os demais.
 >
-> Com o BLU-ROTAS, aplicamos algoritmos de navegação ao grafo, mostramos a decisão no mapa e medimos sua consequência no simulador. Nossa principal resposta é esta: **a melhor rota de cada um pode deixar de ser a melhor decisão para todos quando todos a escolhem.**
+> O BLU-ROTAS une o conteúdo de grafos da disciplina a uma pergunta que qualquer motorista entende: **a melhor rota de cada um pode deixar de ser a melhor decisão para todos quando todos a escolhem.**
 
 ## Ensaio e conferência
 
-- A fala foi dividida para cerca de **2:00 + 2:30 + 3:00 + 2:30**, incluindo pausas para apontar. Ensaiem com cronômetro; reduzam exemplos, não os limites científicos, se passarem de dez minutos.
+- A fala foi dividida para cerca de **1:50 + 2:55 + 3:00 + 2:15**, incluindo pausas para apontar. Ensaiem com cronômetro; reduzam exemplos, não os limites científicos, se passarem de dez minutos.
 - **Não digam “50% é ótimo para Blumenau”.** Foi o menor tempo entre cinco percentuais deste cenário sintético na Beira-Rio.
 - **Não digam “o GPS automático desviou e errou”.** O experimento individual aplicou uma escolha de rota verificável no cruzamento.
 - A Figura 1 mostra duas curvas. Os números citados na fala são da curva **da partida planejada à chegada**, que inclui a espera para entrar; a outra mede apenas o tempo na rede.

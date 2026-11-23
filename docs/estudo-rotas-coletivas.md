@@ -70,7 +70,17 @@ repetições e têm caráter exploratório.
 
 ## Reproduzir
 
-No PowerShell, a partir da pasta do projeto:
+Os resultados publicados foram medidos na malha SHA-256 `633d9a0824eb0bb7`.
+A malha padrão ampliada da versão atual tem outro hash (`191ebe927ab14c60`),
+outros semáforos e outro recorte. Para reproduzir os números publicados,
+abra a tag `study-rotas-malha-633d9a08` em uma pasta separada:
+
+```powershell
+git worktree add --detach ..\blu-rotas-estudo study-rotas-malha-633d9a08
+cd ..\blu-rotas-estudo
+```
+
+No PowerShell, a partir dessa pasta:
 
 ```powershell
 $env:SUMO_BINARY = 'C:\caminho\do\sumo.exe'

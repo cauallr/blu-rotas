@@ -34,6 +34,11 @@ def run_one(output: Path, corridor: str, level: str, seed: int, choice: str) -> 
     origin, destination, name = CORRIDORS[corridor]
     route_data = json.loads((ROOT / "research" / ("estudo-castelo-branco" if corridor == "castelo"
                              else "estudo-rotas-coletivas") / "routes.json").read_text(encoding="utf-8"))
+    actual_network = hashlib.sha256((ROOT / "data" / "blumenau.net.xml").read_bytes()).hexdigest()[:16]
+    if actual_network != route_data["network_sha256_16"]:
+        raise RuntimeError(f"As rotas publicadas usam a malha {route_data['network_sha256_16']}, "
+                           f"mas a malha atual é {actual_network}. Use a tag "
+                           "study-rotas-malha-633d9a08 em outra pasta para reproduzir este estudo.")
     primary = route_data["primary"]["route"]
     alternative = route_data["alternative"]["route"]
     common = []

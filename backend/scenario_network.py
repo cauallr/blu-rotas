@@ -14,6 +14,8 @@ from uuid import uuid4
 
 import sumolib
 
+from .traffic_signals import SIMULATED_SIGNALS_FILE, load_simulated_signals
+
 
 def way_id_from_edge(edge_id: str) -> str:
     match = re.match(r"^-?(\d+)", edge_id)
@@ -230,9 +232,13 @@ class ScenarioNetwork:
             command = [self.netconvert, "--osm-files", str(osm_path), "--output-file", str(net_path),
                        "--output.street-names", "true",
                        "--geometry.remove", "--ramps.guess", "true", "--junctions.join", "true",
-                       "--tls.guess", "true", "--tls.default-type", "static",
+                       "--tls.guess", "true", "--tls.guess-signals", "true", "--tls.default-type", "static",
                        "--remove-edges.isolated", "true", "--no-turnarounds", "true"]
-            result = subprocess.run(command, capture_output=True, text=True, timeout=180)
+            simulated_signals = load_simulated_signals(self.base_dir)
+            if simulated_signals:
+                command.extend(["--tls.set", ",".join(simulated_signals)])
+                shutil.copy2(self.base_dir / SIMULATED_SIGNALS_FILE, output_dir / SIMULATED_SIGNALS_FILE)
+            result = subprocess.run(command, capture_output=True, encoding="utf-8", errors="replace", timeout=180)
             if result.returncode or not net_path.exists():
                 raise ValueError("netconvert não conseguiu construir a rua: " + (result.stderr or result.stdout)[-600:])
             net = sumolib.net.readNet(str(net_path), withInternal=True)

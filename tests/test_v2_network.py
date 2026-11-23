@@ -8,6 +8,7 @@ import pytest
 from backend.scenario_network import ScenarioNetwork, way_id_from_edge
 from backend.engine import Simulator
 from backend.storage import Storage
+from backend.traffic_signals import SIMULATED_SIGNALS_FILE, load_simulated_signals
 from backend.urban import AccessPoints
 import sumolib
 
@@ -77,7 +78,7 @@ def test_saved_access_point_is_a_routing_vertex(tmp_path):
 
 @pytest.mark.skipif(not os.environ.get("SUMO_BINARY"), reason="SUMO indisponível")
 def test_edited_lanes_direction_and_signal_reach_sumo(tmp_path):
-    for name in ("blumenau-centro.osm.xml", "roads.geojson", "places.geojson"):
+    for name in ("blumenau-centro.osm.xml", "roads.geojson", "places.geojson", SIMULATED_SIGNALS_FILE):
         shutil.copy2(Path("data") / name, tmp_path / name)
     builder = ScenarioNetwork(tmp_path)
     way_id = "1010048512"
@@ -85,7 +86,11 @@ def test_edited_lanes_direction_and_signal_reach_sumo(tmp_path):
     manifest = builder.build([], "Rede editada", [{"way_id": way_id, "direction": "both",
         "lanes_forward": 2, "lanes_backward": 1, "speed_kmh": 35, "name": "Rua do Estudo"}],
         [{"coordinates": signal_point}])
-    net = sumolib.net.readNet(str(tmp_path / "scenarios" / manifest["id"] / "network.net.xml"))
+    scenario_dir = tmp_path / "scenarios" / manifest["id"]
+    net = sumolib.net.readNet(str(scenario_dir / "network.net.xml"))
+    simulated_signals = load_simulated_signals(scenario_dir)
+    assert simulated_signals == load_simulated_signals(tmp_path)
+    assert set(simulated_signals) <= {controller.getID() for controller in net.getTrafficLights()}
     directions = {direction: [edge for edge in net.getEdges()
         if edge.getID().lstrip("-").split("#")[0] == way_id and edge.getID().startswith("-") == reverse]
         for direction, reverse in (("forward", False), ("backward", True))}
