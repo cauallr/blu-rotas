@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
+import maplibregl, { type ExpressionSpecification, type Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Light, Road, RoadNetwork, Selection, Snapshot, Vehicle } from './types';
 import { motionAlongLane } from './vehicleMotion';
@@ -27,6 +27,7 @@ type Props = {
 };
 const empty: FeatureCollection = { type: 'FeatureCollection', features: [] };
 const collection = (features: GeoJSON.Feature[]): FeatureCollection => ({ type: 'FeatureCollection', features });
+const regularLight: ExpressionSpecification = ['==', ['get', 'simulated'], false];
 type VehiclePosition = { coordinates: [number, number]; lane?: string };
 const trafficColors = { red: '#fa6877', yellow: '#ffc06b', green: '#54dfbc' };
 const carPalette: [string, string][] = [['mint', '#4de1cc'], ['coral', '#f27e8b'], ['amber', '#f7c271'], ['blue', '#77a8ed'], ['violet', '#b995ef'], ['white', '#edf5f2']];
@@ -65,16 +66,16 @@ function addTrafficIcons(map: MapLibreMap) {
   for (const [key, color] of carPalette) {
     addCarImage(map, key, color);
   }
-  for (const aspect of ['closed', 'open', 'attention', 'mixed']) {
+  for (const aspect of ['closed', 'open', 'attention', 'mixed', 'inactive']) {
     const canvas = document.createElement('canvas');
     canvas.width = 44; canvas.height = 72;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = '#10191e'; ctx.strokeStyle = '#8ca8a8'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(3, 3, 38, 66, 11); ctx.fill(); ctx.stroke();
     for (const [index, color] of Object.entries(trafficColors).entries()) {
-      const active = aspect === 'mixed' ? color[0] !== 'yellow' :
-        aspect === 'closed' ? color[0] === 'red' :
-        aspect === 'open' ? color[0] === 'green' : color[0] === 'yellow';
+      const active = (aspect === 'mixed' && color[0] !== 'yellow') ||
+        (aspect === 'closed' && color[0] === 'red') || (aspect === 'open' && color[0] === 'green') ||
+        (aspect === 'attention' && color[0] === 'yellow');
       ctx.beginPath(); ctx.arc(22, 16 + index * 20, 7, 0, Math.PI * 2);
       ctx.fillStyle = active ? color[1] : '#304249'; ctx.fill();
     }
@@ -88,6 +89,19 @@ function addTrafficIcons(map: MapLibreMap) {
   ctx.strokeStyle = '#c7f1e6'; ctx.lineWidth = 4;
   ctx.beginPath(); ctx.moveTo(3, 12); ctx.lineTo(26, 12); ctx.moveTo(19, 5); ctx.lineTo(27, 12); ctx.lineTo(19, 19); ctx.stroke();
   map.addImage('direction-arrow', ctx.getImageData(0, 0, 32, 24), { pixelRatio: 2 });
+}
+
+function trafficLightFeatures(snapshot: Snapshot | null, network: RoadNetwork): FeatureCollection {
+  const lights = snapshot?.connected
+    ? (snapshot.lights || []).map(light => ({
+      id: light.id, coordinates: light.coordinates, aspect: light.aspect, simulated: Boolean(light.simulated_neighborhood),
+    }))
+    : (network.simulated_lights || []).map(light => ({ ...light, simulated: true, aspect: 'inactive' }));
+  return collection(lights.map(light => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: light.coordinates },
+    properties: { id: light.id, aspect: light.aspect, simulated: light.simulated },
+  })));
 }
 
 function lineDistance(map: MapLibreMap, point: maplibregl.Point, feature: GeoJSON.Feature): number {
@@ -140,6 +154,7 @@ export default function CityMap(props: Props) {
       (instance.getSource('roads') as maplibregl.GeoJSONSource).setData(collection(latest.current.network.features));
       (instance.getSource('lanes') as maplibregl.GeoJSONSource).setData(latest.current.network.lanes || empty);
       (instance.getSource('places') as maplibregl.GeoJSONSource).setData(latest.current.places);
+      (instance.getSource('lights') as maplibregl.GeoJSONSource).setData(trafficLightFeatures(latest.current.snapshot, latest.current.network));
       if (latest.current.baseRoads.features.length) {
         fitRoads(instance, latest.current.baseRoads);
         fittedCity.current = latest.current.snapshot?.city_id ?? null;
@@ -181,19 +196,20 @@ export default function CityMap(props: Props) {
       instance.addLayer({ id: 'road-labels', type: 'symbol', source: 'base', minzoom: 15, layout: { 'symbol-placement': 'line', 'text-field': ['get', 'name'], 'text-size': 10, 'text-font': ['Open Sans Regular'] }, paint: { 'text-color': '#9db5bb', 'text-halo-color': '#101c25', 'text-halo-width': 2 } });
       instance.addLayer({ id: 'places-labels', type: 'symbol', source: 'places', layout: { 'text-field': ['get', 'name'], 'text-size': 15, 'text-font': ['Open Sans Regular'] }, paint: { 'text-color': '#a4c1c0', 'text-halo-color': '#101c25', 'text-halo-width': 3 } });
       instance.addLayer({ id: 'lights-dots', type: 'circle', source: 'lights', maxzoom: 15,
-        filter: ['!=', ['get', 'aspect'], 'mixed'],
+        filter: ['all', regularLight, ['!=', ['get', 'aspect'], 'mixed']],
         paint: { 'circle-radius': 5, 'circle-color': ['match', ['get', 'aspect'],
           'closed', '#fa6877', 'open', '#54dfbc', 'attention', '#ffc06b', '#fa6877'],
           'circle-stroke-color': '#122126', 'circle-stroke-width': 2 } });
       instance.addLayer({ id: 'lights-mixed-red', type: 'circle', source: 'lights', maxzoom: 15,
-        filter: ['==', ['get', 'aspect'], 'mixed'],
+        filter: ['all', regularLight, ['==', ['get', 'aspect'], 'mixed']],
         paint: { 'circle-radius': 3.5, 'circle-color': '#fa6877', 'circle-translate': [-3.5, 0],
           'circle-stroke-color': '#122126', 'circle-stroke-width': 1 } });
       instance.addLayer({ id: 'lights-mixed-half', type: 'circle', source: 'lights', maxzoom: 15,
-        filter: ['==', ['get', 'aspect'], 'mixed'],
+        filter: ['all', regularLight, ['==', ['get', 'aspect'], 'mixed']],
         paint: { 'circle-radius': 3.5, 'circle-color': '#54dfbc', 'circle-translate': [3.5, 0],
           'circle-stroke-color': '#122126', 'circle-stroke-width': 1 } });
       instance.addLayer({ id: 'lights-icon', type: 'symbol', source: 'lights', minzoom: 15, maxzoom: 16,
+        filter: regularLight,
         layout: { 'icon-image': ['concat', 'traffic-', ['get', 'aspect']], 'icon-allow-overlap': true, 'icon-size': ['interpolate', ['linear'], ['zoom'], 13.7, 0.75, 16, 1] } });
       instance.addLayer({ id: 'signal-approaches', type: 'line', source: 'signal-approaches', minzoom: 16,
         layout: { 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'aspect'],
@@ -222,6 +238,10 @@ export default function CityMap(props: Props) {
       instance.addLayer({ id: 'vehicles-car', type: 'symbol', source: 'vehicles', minzoom: 17,
         layout: { 'icon-image': ['concat', 'car-', ['get', 'colorKey']], 'icon-size': ['interpolate', ['exponential', 2], ['zoom'], 17, 0.25, 19, 1],
           'icon-anchor': 'top', 'icon-rotate': ['get', 'angle'], 'icon-rotation-alignment': 'map', 'icon-allow-overlap': true } });
+      instance.addLayer({ id: 'lights-simulated-icon', type: 'symbol', source: 'lights',
+        filter: ['==', ['get', 'simulated'], true],
+        layout: { 'icon-image': ['concat', 'traffic-', ['get', 'aspect']], 'icon-allow-overlap': true,
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 14, 0.65, 16, 1] } });
       instance.addLayer({ id: 'selected-car-halo', type: 'circle', source: 'selected-car',
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 9, 17, 17], 'circle-color': '#ffffff', 'circle-opacity': 0.08, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 } });
       instance.addLayer({ id: 'route-pins-circle', type: 'circle', source: 'route-pins',
@@ -310,19 +330,19 @@ export default function CityMap(props: Props) {
         }
         const vehicleHit = instance.queryRenderedFeatures(box, { layers: ['vehicles-car', 'vehicles-circle', 'vehicles-distant'] })[0];
         const movementHit = instance.queryRenderedFeatures(box, { layers: ['signal-movements'] })[0];
-        const lightHit = instance.queryRenderedFeatures(box, { layers: ['lights-icon', 'lights-mixed-half', 'lights-mixed-red', 'lights-dots'] })[0];
+        const lightHit = instance.queryRenderedFeatures(box, { layers: ['lights-simulated-icon', 'lights-icon', 'lights-mixed-half', 'lights-mixed-red', 'lights-dots'] })[0];
         const roadHits = roadAt(event.point);
         if ((state.tool === 'vehicle' || state.tool === 'select') && vehicleHit) {
           const value = state.snapshot?.vehicles.find((item: Vehicle) => item.id === vehicleHit.properties?.id);
           if (value) { state.onSelect({ kind: 'vehicle', value }); return; }
         }
-        if ((state.tool === 'light' || state.tool === 'select') && movementHit) {
-          const value = state.snapshot?.lights.find((item: Light) => item.id === movementHit.properties?.tls_id);
-          if (value) { state.onSelect({ kind: 'light', value, movement_id: movementHit.properties?.id }); return; }
-        }
-        if ((state.tool === 'light' || state.tool === 'select') && lightHit) {
-          const value = state.snapshot?.lights.find((item: Light) => item.id === lightHit.properties?.id);
-          if (value) { state.onSelect({ kind: 'light', value }); return; }
+        if (state.tool === 'light' || state.tool === 'select') {
+          const simulatedIconHit = lightHit?.layer.id === 'lights-simulated-icon';
+          const movement = simulatedIconHit ? undefined : movementHit;
+          const id = movement?.properties?.tls_id ?? lightHit?.properties?.id;
+          const value = state.snapshot?.lights?.find((item: Light) => item.id === id);
+          if (value) { state.onSelect({ kind: 'light', value, movement_id: movement?.properties?.id }); return; }
+          if (simulatedIconHit) return;
         }
         if ((state.tool === 'road' || state.tool === 'select') && roadHits.length) {
           const options = roadHits.map(feature => feature.properties as Road);
@@ -436,10 +456,7 @@ export default function CityMap(props: Props) {
       animation.current = requestAnimationFrame(frame);
       previous.current = { time: props.snapshot.sim_time, runId: props.snapshot.run_id };
     }
-    const lights = (props.snapshot?.lights || []).map(light => ({ type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: light.coordinates },
-      properties: { id: light.id, aspect: light.aspect } }));
-    (instance.getSource('lights') as maplibregl.GeoJSONSource).setData(collection(lights));
+    (instance.getSource('lights') as maplibregl.GeoJSONSource).setData(trafficLightFeatures(props.snapshot, props.network));
     const movements = (props.snapshot?.lights || []).flatMap(light => light.movements.map(movement => ({
       type: 'Feature' as const, geometry: { type: 'Point' as const, coordinates: movement.coordinates },
       properties: { id: movement.id, tls_id: light.id, aspect: movement.aspect } })));

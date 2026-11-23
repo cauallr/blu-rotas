@@ -26,7 +26,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
-BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v3"
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v4"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -830,8 +830,14 @@ class Simulator:
                               "geometry": {"type": "LineString", "coordinates": [
                                   self.net.convertXY2LonLat(x, y) for x, y in shape]},
                               "properties": {"width_m": lane.getWidth() if lane.getWidth() > 0 else 3.2}})
+        simulated_lights = [
+            {"id": tls.getID(), "coordinates": self.net.convertXY2LonLat(*self.net.getNode(tls.getID()).getCoord())}
+            for tls in self.net.getTrafficLights()
+            if tls.getID() in self.simulated_signals and self.net.hasNode(tls.getID())
+        ]
         return {"type": "FeatureCollection", "features": features,
-                "lanes": {"type": "FeatureCollection", "features": lanes}}
+                "lanes": {"type": "FeatureCollection", "features": lanes},
+                "simulated_lights": simulated_lights}
 
     def snapshot(self):
         if not self.connected:

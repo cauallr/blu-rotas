@@ -7,7 +7,10 @@ export type Road = { id: string; name: string; length?: number; speed_kmh?: numb
 export type Snapshot = { ready: boolean; connected: boolean; running: boolean; error?: string; sim_time: number; speed: number; clock_hour: number; city_start_hour: number; network_version: string; network_scenario_id: string | null; city_id: string | null; city_name: string; weather: string; weather_modifiers: Record<string, number>; vehicles: Vehicle[]; active: number; completed: number; spawned: number; reroutes: number; lights: Light[]; congestion: { id: string; count: number; speed: number }[]; blocked: string[]; reduced: Record<string, number>; partial: string[]; sample: Record<string, number>; run_id: number; loop: { enabled: boolean; hour: number; peak: boolean; vehicles_per_minute: number; base_per_minute: number; peak_multiplier: number; start_hour: number }; gps: { interval: number; benefit: number; dynamic_percent: number } };
 export type Selection = { kind: 'vehicle'; value: Vehicle } | { kind: 'road'; value: Road } | { kind: 'light'; value: Light; movement_id?: string } | null;
 export type FeatureCollection = GeoJSON.FeatureCollection;
-export type RoadNetwork = FeatureCollection & { lanes?: GeoJSON.FeatureCollection<GeoJSON.LineString> };
+export type RoadNetwork = FeatureCollection & {
+  lanes?: GeoJSON.FeatureCollection<GeoJSON.LineString>;
+  simulated_lights?: Pick<Light, 'id' | 'coordinates'>[];
+};
 export type GraphOverlay = { vertices: FeatureCollection; arcs: FeatureCollection; components: number; note: string };
 export type GraphVertex = { id: string; degree_in: number; degree_out: number; incoming: string[]; outgoing: string[]; component: number; neighborhood: string; intersection_type: string; length_m: number; speed_kmh: number; coordinates: [number, number] };
 export type AccessPoint = { id: string; name: string; kind: 'acesso'; network: string; coordinates: [number, number]; edge_id: string; position: number; distance_m: number };

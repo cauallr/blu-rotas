@@ -45,6 +45,20 @@ A malha importa os semáforos do OpenStreetMap e reúne focos mapeados nas aprox
 
 Todos os 12 bairros identificados no mapa têm pelo menos um semáforo. Onde faltava cobertura, a malha passou a incluir controladores simulados em cruzamentos viários da Boa Vista, Bom Retiro, Ribeirão Fresco e dos trechos de Água Verde, Do Salto e Vila Formosa. O painel identifica esses pontos como **Semáforo simulado** e exibe o bairro. Os locais foram conferidos com a [camada de bairros da Prefeitura de Blumenau](https://geo.blumenau.sc.gov.br/server/rest/services/Limites/Bairros/MapServer).
 
+
+### Semáforos simulados adicionais
+
+Os pontos ficam dentro dos limites municipais dos bairros e controlam entradas de pelo menos duas ruas. A seleção prioriza conexões com as vias principais e a distância em relação aos controladores existentes.
+
+| Bairro | Novos pontos | Cruzamentos |
+|---|---:|---|
+| Ribeirão Fresco | 3 | Pastor Oswald Hesse × João Manoel da Luz, Pastor Oswald Hesse × Norberto Kalvelage, Alwin Schrader × Corumbá |
+| Garcia | 3 | Amazonas × Pastor Oswald Hesse, Amazonas × Cataguases × Guaramirim, Araranguá × Achiles Jacobsen |
+| Velha | 4 | Humberto de Campos × Eliana Schumann, João Pessoa × Marechal Deodoro × Mafra, João Pessoa × Euclides da Cunha, João Pessoa × Professor Luiz Schwarz |
+| Bom Retiro | 5 | Hermann Hering × Bruno Hering, Hermann Hering × Recife, Hermann Hering × Augusto Otte, Hermann Hering × Victor Hering, Floriano Peixoto × Klara Hering |
+
+O painel identifica cada controlador como **Semáforo simulado**. No trecho do Ribeirão Fresco coberto pelo mapa, os dois cruzamentos da Pastor Oswald Hesse ficam a cerca de 52 m um do outro.
+
 ## Controles
 
 - **Navegação:** o mapa reúne as ferramentas em cinco grupos: Explorar, Carros e GPS, Ruas e grafo, Semáforos e Cidade. Escolha a ação específica nos botões do painel. O botão da barra superior abre tela cheia; a barra esquerda e o painel direito podem ser ocultados, e o painel direito também pode ser estreitado. O mapa se redimensiona automaticamente. Os botões **?** explicam os controles mais complexos.
@@ -68,7 +82,7 @@ Todos os 12 bairros identificados no mapa têm pelo menos um semáforo. Onde fal
 - **Gerenciar mapas:** importe arquivo OSM XML local, opcionalmente com recorte por coordenadas, para criar uma cidade/área independente. A importação de Blumenau inteira exige fornecer o arquivo OSM e memória/tempo suficientes; o pacote inclui a região central ampliada e trechos de bairros vizinhos.
 - **Laboratório científico:** em **Modo Ciência**, execute A GPS, B semáforos, C saturação, D obras, E estrada nova, F clima ou variantes próprias. Modos rápido e visual usam a mesma física SUMO. Veja resultados por veículo, via e cenário, compare duas execuções, repita com mesma semente/demanda, assista a replay de snapshots reais e exporte CSV, JSON ou PDF. Viagens não concluídas permanecem na contagem. Veja [modelo e metodologia](docs/modelo-2.0.md) para variáveis, métricas e limites.
 - **Estudo de rotas coletivas:** o protocolo em [docs/estudo-rotas-coletivas.md](docs/estudo-rotas-coletivas.md) reproduz as comparações “todos na avenida”, “um motorista alternativo”, “todos alternativos”, “metade em cada rota” e “GPS dinâmico” em três níveis de demanda e três sementes, usando o mesmo SUMO. Os scripts geram tabelas CSV, dados brutos e gráficos de tempo, ocupação e calor da rede.
-- **Resultados já calculados:** [relatório acadêmico](research/relatorio-estudo-rotas.md), CSVs, gráficos SVG e saídas nativas do SUMO estão em `research/`. Os bancos SQLite locais não são necessários para reproduzir as tabelas publicadas. Esses resultados usam a malha anterior, SHA-256 `633d9a0824eb0bb7`, preservada na tag Git `study-rotas-malha-633d9a08`. A malha padrão expandida usa SHA-256 `191ebe927ab14c60` e deve ser tratada como outro cenário experimental; não atribua a ela os números do banner sem repetir os testes.
+- **Resultados já calculados:** [relatório acadêmico](research/relatorio-estudo-rotas.md), CSVs, gráficos SVG e saídas nativas do SUMO estão em `research/`. Os bancos SQLite locais não são necessários para reproduzir as tabelas publicadas. Esses resultados usam a malha anterior, SHA-256 `633d9a0824eb0bb7`, preservada na tag Git `study-rotas-malha-633d9a08`. A malha padrão com os semáforos adicionais usa a versão `blumenau-centro-expandido-v4`. Para aplicar a ela os resultados do banner, repita os testes nessa versão.
 - **Decisão do motorista na bifurcação:** [estudo pareado de ficar ou desviar](research/perguntas-gps-e-grafos.md) compara a previsão do grafo com o percurso físico e a chegada em dois corredores, com arquivos TripInfo nativos e script de reprodução.
 - **Clima:** sol, chuva fraca ou intensa aplicam fatores experimentais de velocidade, aceleração, desaceleração e tempo de segurança nos veículos do SUMO.
 - **Ciência:** amostras, viagens concluídas, intervenções, gráficos e exportação CSV vêm do SQLite. Um cenário salvo registra semente, pares origem/destino, horário de partida, GPS, clima, obras e fases modificadas; pode ser reexecutado.

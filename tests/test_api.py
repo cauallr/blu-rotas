@@ -17,6 +17,9 @@ def test_map_and_status_without_sumo():
         assert roads.status_code == 200
         assert roads.json()['type'] == 'FeatureCollection'
         assert len(roads.json()['features']) > 100
+        markers = roads.json()['simulated_lights']
+        assert {marker['id'] for marker in markers} == set(SIM.simulated_signals)
+        assert all(len(marker['coordinates']) == 2 for marker in markers)
 
 
 def test_cannot_spawn_without_engine():

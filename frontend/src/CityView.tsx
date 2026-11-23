@@ -617,7 +617,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
               </div>; })}</div>
             <div className="field"><label>Nova duração: {phaseDuration} s</label><input type="range" min="3" max="120" value={phaseDuration} onChange={event => setPhaseDuration(Number(event.target.value))} /></div>
             <button className="wide" disabled={!active || busy} onClick={() => act('/light', { tls_id: selected.value.id, restore: true })}>Restaurar programação</button>
-            <p className="micro-note">A mudança de duração entra no ciclo do controlador. Ela não força o sinal a mudar de cor no clique.</p></> : <p className="panel-copy">No zoom geral, cada ponto resume o cruzamento. A partir do zoom próximo, os estados aparecem separados nas faixas de entrada.</p>}</section>}
+            <p className="micro-note">A mudança de duração entra no ciclo do controlador. Ela não força o sinal a mudar de cor no clique.</p></> : <p className="panel-copy">{active ? 'Os semáforos simulados mantêm o ícone no mapa geral e de perto. Aproxime para ver as fases por faixa.' : 'Os ícones dos semáforos simulados ficam apagados até você clicar em Iniciar.'}</p>}</section>}
 
         {tool === 'weather' && <section className="panel-section"><div className="section-heading"><span><CloudSun size={17} /> Condição climática</span></div>
           <div className="weather-options">{[['sun', 'Sol', CloudSun], ['light_rain', 'Chuva fraca', CloudRain], ['heavy_rain', 'Chuva forte', CloudRain]].map(([key, label, Icon]) => <button key={String(key)} className={snapshot?.weather === key ? 'chosen' : ''} disabled={!active || busy} onClick={() => act('/weather', { weather: key })}><Icon size={18} /><span>{String(label)}</span></button>)}</div>
