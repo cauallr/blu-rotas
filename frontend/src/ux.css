@@ -66,6 +66,144 @@
   flex-shrink: 0;
 }
 
+.sim-controls {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  flex: 1;
+}
+
+.tracking-control {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.tracking-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 2px solid #29454e;
+  border-radius: 7px;
+  background: #1b3038;
+  color: #edf8f5;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app-shell[data-theme=light] .tracking-button {
+  background: #fff;
+  color: #26434b;
+}
+
+.app-shell[data-theme] .tracking-button[aria-pressed="true"] {
+  background: #5be0c9;
+  color: #092724;
+}
+
+.tracking-button:hover {
+  border-color: #479381;
+}
+
+.tracking-card {
+  position: absolute;
+  z-index: 3;
+  top: 92px;
+  right: 20px;
+  width: min(262px, calc(100% - 40px));
+  padding: 11px 12px;
+  border: 1px solid #3a6669;
+  border-radius: 9px;
+  background: #10272df5;
+  color: #edf8f5;
+  box-shadow: 0 8px 24px #0005;
+  font-size: 12px;
+}
+
+.app-shell[data-theme=light] .tracking-card {
+  background: #f7fbf9f5;
+  color: #1d4249;
+  border-color: #bfd8d6;
+  box-shadow: 0 8px 24px #4563;
+}
+
+.tracking-card-header,.tracking-vehicle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracking-card-header {
+  justify-content: space-between;
+}
+
+.tracking-card button {
+  border: 1px solid #618888;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+}
+
+.tracking-card-header button {
+  min-height: 25px;
+  padding: 0 6px;
+}
+
+.tracking-card p {
+  margin: 5px 0 0;
+  line-height: 1.4;
+}
+
+.tracking-vehicle {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #779a9a55;
+}
+
+.tracking-number {
+  flex: 0 0 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #10262b;
+  font-weight: 800;
+}
+
+.tracking-trip {
+  flex: 1;
+  min-width: 0;
+}
+
+.tracking-trip strong,.tracking-trip small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracking-trip small {
+  margin-top: 2px;
+}
+
+.tracking-remove {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+}
+
+@media (min-width: 1121px) and (max-width: 1200px) {
+  .sim-bar { gap: 14px; }
+}
+
+@media (max-width: 760px) {
+  .tracking-card { top: 55px; right: 10px; width: min(225px, calc(100% - 20px)); }
+}
+
 .app-shell[data-theme] .sim-bar .speed-group button {
   border: 2px solid #29454e;
 }
@@ -86,5 +224,7 @@
 @media (max-width: 520px) {
   .sim-bar { flex-wrap: wrap; align-content: center; row-gap: 4px; }
   .sim-bar .transport button { width: 34px; height: 32px; }
-  .sim-bar .speed-group { flex-basis: 100%; justify-content: center; }
+  .sim-controls { flex-basis: 100%; justify-content: center; }
+  .tracking-control { flex: 0 0 auto; }
+  .tracking-button { min-height: 30px; padding: 0 8px; font-size: 11px; }
 }

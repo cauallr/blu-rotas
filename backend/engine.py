@@ -26,7 +26,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
-BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v3"
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v4"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -519,6 +519,7 @@ class Simulator:
                   "distance_delta_m": round(after_metres - before_metres, 1),
                   "previous_route": remaining, "new_route": candidate}
         info["route"] = list(candidate)
+        info["route_index_origin"] = traci.vehicle.getRouteIndex(vehicle_id)
         info["previous_route"] = remaining
         info["last_route_change"] = change
         info["route_history"].append(change)
@@ -708,6 +709,7 @@ class Simulator:
                 info["last_route_change"] = change
                 info["route_history"].append(change)
                 info["route"] = candidate
+                info["route_index_origin"] = traci.vehicle.getRouteIndex(vehicle_id)
                 info["reroutes"] += 1
                 self.route_changes += 1
                 info["gps_status"] = "Rota atualizada por trânsito" if not obstructed else "Desvio por interdição"
@@ -830,8 +832,14 @@ class Simulator:
                               "geometry": {"type": "LineString", "coordinates": [
                                   self.net.convertXY2LonLat(x, y) for x, y in shape]},
                               "properties": {"width_m": lane.getWidth() if lane.getWidth() > 0 else 3.2}})
+        simulated_lights = [
+            {"id": tls.getID(), "coordinates": self.net.convertXY2LonLat(*self.net.getNode(tls.getID()).getCoord())}
+            for tls in self.net.getTrafficLights()
+            if tls.getID() in self.simulated_signals and self.net.hasNode(tls.getID())
+        ]
         return {"type": "FeatureCollection", "features": features,
-                "lanes": {"type": "FeatureCollection", "features": lanes}}
+                "lanes": {"type": "FeatureCollection", "features": lanes},
+                "simulated_lights": simulated_lights}
 
     def snapshot(self):
         if not self.connected:
@@ -857,6 +865,7 @@ class Simulator:
                              "angle": traci.vehicle.getAngle(vehicle_id),
                              "lane_id": traci.vehicle.getLaneID(vehicle_id),
                              "road": road,
+                             "route_index": traci.vehicle.getRouteIndex(vehicle_id) - info.get("route_index_origin", 0),
                              "eta_city_hour": city_hour(self.city_start_hour, info["predicted_arrival_sim_time"])
                              if info.get("predicted_arrival_sim_time") is not None else None,
                              "travel_time": now - info["departed"]})

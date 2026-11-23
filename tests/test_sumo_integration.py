@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -16,11 +17,12 @@ def test_expanded_map_exposes_grouped_traffic_lights(tmp_path):
         snapshot = sim.start(42)
         lights = {light["id"]: light for light in snapshot["lights"]}
         assert set(lights) == set(traci.trafficlight.getIDList())
-        coverage = {light["simulated_neighborhood"]: light for light in lights.values()
-                    if light["simulated_neighborhood"]}
-        assert set(coverage) == {"Água Verde", "Boa Vista", "Bom Retiro", "Do Salto",
-                                 "Ribeirão Fresco", "Vila Formosa"}
-        for light in coverage.values():
+        simulated = [light for light in lights.values() if light["simulated_neighborhood"]]
+        assert Counter(light["simulated_neighborhood"] for light in simulated) == {
+            "Água Verde": 1, "Boa Vista": 1, "Bom Retiro": 6, "Do Salto": 1, "Garcia": 3,
+            "Ribeirão Fresco": 4, "Velha": 4, "Vila Formosa": 1,
+        }
+        for light in simulated:
             assert len(light["phases"]) >= 2
             assert len({movement["incoming_road"] for movement in light["movements"]}) >= 2
         grouped = lights["GS_13081239399"]

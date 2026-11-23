@@ -71,7 +71,7 @@ repetições e têm caráter exploratório.
 ## Reproduzir
 
 Os resultados publicados foram medidos na malha SHA-256 `633d9a0824eb0bb7`.
-A malha padrão ampliada da versão atual tem outro hash (`191ebe927ab14c60`),
+A malha padrão da versão `blumenau-centro-expandido-v4` tem outro hash,
 outros semáforos e outro recorte. Para reproduzir os números publicados,
 abra a tag `study-rotas-malha-633d9a08` em uma pasta separada:
 
