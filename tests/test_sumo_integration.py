@@ -10,6 +10,30 @@ from backend.storage import Storage
 
 @pytest.mark.skipif(not os.environ.get("SUMO_BINARY") or not Path("data/blumenau.net.xml").exists(),
                     reason="Defina SUMO_BINARY para o teste de integração real")
+def test_expanded_map_exposes_grouped_traffic_lights(tmp_path):
+    sim = Simulator("data", Storage(str(tmp_path / "traffic-lights.sqlite3")))
+    try:
+        snapshot = sim.start(42)
+        lights = {light["id"]: light for light in snapshot["lights"]}
+        assert set(lights) == set(traci.trafficlight.getIDList())
+        grouped = lights["GS_13081239399"]
+        assert not sim.net.hasNode(grouped["id"])
+        assert grouped["coordinates"] == pytest.approx([-49.059319, -26.8940652], abs=0.0002)
+        assert len(grouped["phases"]) >= 2
+        assert len({movement["incoming_lane"] for movement in grouped["movements"]}) >= 2
+        for light in lights.values():
+            links = traci.trafficlight.getControlledLinks(light["id"])
+            movements = light["movements"]
+            assert len({movement["id"] for movement in movements}) == len(movements)
+            for movement in movements:
+                assert any(incoming == movement["incoming_lane"] and outgoing == movement["outgoing_lane"]
+                           for incoming, outgoing, _ in links[movement["index"]])
+    finally:
+        sim.stop()
+
+
+@pytest.mark.skipif(not os.environ.get("SUMO_BINARY") or not Path("data/blumenau.net.xml").exists(),
+                    reason="Defina SUMO_BINARY para o teste de integração real")
 def test_sumo_vehicle_weather_light_and_reroute(tmp_path):
     sim = Simulator("data", Storage(str(tmp_path / "test.sqlite3")))
     try:
