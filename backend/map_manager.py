@@ -118,7 +118,7 @@ class MapManager:
             tree.write(source, encoding="utf-8", xml_declaration=True)
             result = subprocess.run([self.netconvert, "--osm-files", str(source), "--output-file", str(net_path),
                 "--geometry.remove", "--ramps.guess", "true", "--junctions.join", "true",
-                "--tls.guess", "true", "--tls.default-type", "static",
+                "--tls.guess", "true", "--tls.guess-signals", "true", "--tls.default-type", "static",
                 "--remove-edges.isolated", "true", "--no-turnarounds", "true"],
                 capture_output=True, encoding="utf-8", errors="replace", timeout=300)
             if result.returncode or not net_path.exists():

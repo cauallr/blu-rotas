@@ -41,6 +41,8 @@ node scripts\prepare-map.mjs
 
 O script baixa seis recortes do OSM e une os nós, vias e relações pelo identificador para respeitar o limite de nós por requisição. O `netconvert` pode emitir avisos sobre relações de transporte e restrições que atravessam a borda do recorte; a versão fornecida foi construída com sucesso. As arestas usadas pelo roteador são filtradas por permissões de automóvel nas faixas e nas conexões internas.
 
+A malha importa os semáforos do OpenStreetMap e reúne focos mapeados nas aproximações de um mesmo cruzamento quando o SUMO identifica o controlador comum. O mapa exibe o estado por faixa depois de iniciar o SUMO. A conferência com publicações municipais inclui Humberto de Campos com Alberto Stein (Velha), Almirante Tamandaré com Marechal Deodoro (Vila Nova), Antônio da Veiga com Max Hering (Victor Konder) e Engenheiro Paul Werner com Pernambuco (Itoupava Seca). Os ciclos exibidos são calculados pelo SUMO para a simulação. [Prefeitura de Blumenau — cruzamentos e sinalização](https://blumenau.sc.gov.br/secao/noticias/134510) · [Prefeitura de Blumenau — modernização semafórica](https://www.blumenau.sc.gov.br/secao/noticias/26721) · [Estudo técnico municipal](https://www.blumenau.sc.gov.br/secao/fiscalizacao-eletronica-smtt%26download%3D9846f4408a3496292415a5888ee0d3a9)
+
 ## Controles
 
 - **Navegação:** o mapa reúne as ferramentas em cinco grupos: Explorar, Carros e GPS, Ruas e grafo, Semáforos e Cidade. Escolha a ação específica nos botões do painel. O botão da barra superior abre tela cheia; a barra esquerda e o painel direito podem ser ocultados, e o painel direito também pode ser estreitado. O mapa se redimensiona automaticamente. Os botões **?** explicam os controles mais complexos.

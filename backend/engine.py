@@ -25,7 +25,7 @@ WEATHER = {
     "heavy_rain": {"speed_factor": 0.65, "tau": 1.9, "accel": 1.6, "decel": 3.0},
 }
 STEP_SECONDS = 0.25
-BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v1"
+BLUMENAU_NETWORK_VERSION = "blumenau-centro-expandido-v2"
 
 
 def lane_tail(shape: list[tuple[float, float]], metres: float) -> list[tuple[float, float]]:
@@ -200,11 +200,12 @@ class Simulator:
         self.tls_coordinates = {tls: list(self.net.convertXY2LonLat(*self.net.getNode(tls).getCoord()))
                                 for tls in self.tls_original if self.net.hasNode(tls)}
         self.signal_links = {}
-        for tls_id in traci.trafficlight.getIDList():
+        for tls_id in self.tls_original:
             movements = []
             seen_lanes: dict[str, int] = defaultdict(int)
+            controlled_nodes = {}
             for index, connections in enumerate(traci.trafficlight.getControlledLinks(tls_id)):
-                for incoming_id, outgoing_id, _ in connections:
+                for link_index, (incoming_id, outgoing_id, _) in enumerate(connections):
                     if not incoming_id or not outgoing_id:
                         continue
                     incoming = self.net.getLane(incoming_id)
@@ -220,12 +221,18 @@ class Simulator:
                     approach = lane_tail(shape, min(15, incoming.getLength() * 0.9))
                     in_edge = incoming.getEdge()
                     out_edge = outgoing.getEdge()
-                    movements.append({"id": f"{tls_id}:{index}:{slot}", "index": index,
+                    junction = in_edge.getToNode()
+                    controlled_nodes[junction.getID()] = junction.getCoord()
+                    movements.append({"id": f"{tls_id}:{index}:{link_index}", "index": index,
                                       "incoming_lane": incoming_id, "outgoing_lane": outgoing_id,
                                       "incoming_road": in_edge.getName() or self.osm_names.get(in_edge.getID().lstrip('-').split('#')[0], "Via sem nome"),
                                       "outgoing_road": out_edge.getName() or self.osm_names.get(out_edge.getID().lstrip('-').split('#')[0], "Via sem nome"),
                                       "coordinates": list(self.net.convertXY2LonLat(*marker)),
                                       "approach": [list(self.net.convertXY2LonLat(*xy)) for xy in approach]})
+            if tls_id not in self.tls_coordinates and controlled_nodes:
+                x = sum(point[0] for point in controlled_nodes.values()) / len(controlled_nodes)
+                y = sum(point[1] for point in controlled_nodes.values()) / len(controlled_nodes)
+                self.tls_coordinates[tls_id] = list(self.net.convertXY2LonLat(x, y))
             self.signal_links[tls_id] = movements
         return self.snapshot()
 
