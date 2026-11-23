@@ -589,9 +589,10 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
             <button className="primary-button wide" disabled={mapImporting || !mapName.trim() || !mapFile} onClick={importMap}>{mapImporting ? 'Processando a malha…' : 'Importar e validar no SUMO'}</button>
             <p className="micro-note">Fonte da rede: arquivo OSM fornecido por você. Os cenários sintéticos continuam separados dos dados importados.</p></section></>}
 
-        {tool === 'light' && <section className="panel-section"><div className="section-heading"><span><Signal size={17} /> Semáforos reais do SUMO</span><HelpTip title="Entenda o sinal misto">Misto resume um cruzamento com movimentos de cores diferentes. Selecione uma faixa abaixo ou aproxime o mapa e clique no marcador da via. As fases são programas completos do SUMO; esta tela altera a duração, não abre uma faixa isolada imediatamente.</HelpTip></div>
+        {tool === 'light' && <section className="panel-section"><div className="section-heading"><span><Signal size={17} /> Semáforos do SUMO</span><HelpTip title="Entenda o sinal misto">Misto resume um cruzamento com movimentos de cores diferentes. Selecione uma faixa abaixo ou aproxime o mapa e clique no marcador da via. As fases são programas completos do SUMO; esta tela altera a duração, não abre uma faixa isolada imediatamente.</HelpTip></div>
           {selected?.kind === 'light' ? <><div className="inspector-id"><Signal size={20} />Cruzamento: {[...new Set(selected.value.movements.flatMap(item => [item.incoming_road, item.outgoing_road]).filter(Boolean))].slice(0, 2).join(' / ') || 'sem nome'}</div>
             <p className="signal-id">Controlador SUMO: {selected.value.id}</p>
+            {selected.value.simulated_neighborhood && <p className="micro-note">Semáforo simulado · {selected.value.simulated_neighborhood}</p>}
             <div className={`signal-badge ${selected.value.aspect}`}>{signalNames[selected.value.aspect]}</div>
             <p className="panel-copy">Cada linha abaixo é uma conversão da faixa de entrada para a faixa de saída. A cor ao lado da via indica o estado atual daquele movimento.</p>
             <div className="movement-list">{selected.value.movements.map(movement => <button key={movement.id}

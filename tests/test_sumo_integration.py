@@ -16,6 +16,13 @@ def test_expanded_map_exposes_grouped_traffic_lights(tmp_path):
         snapshot = sim.start(42)
         lights = {light["id"]: light for light in snapshot["lights"]}
         assert set(lights) == set(traci.trafficlight.getIDList())
+        coverage = {light["simulated_neighborhood"]: light for light in lights.values()
+                    if light["simulated_neighborhood"]}
+        assert set(coverage) == {"Água Verde", "Boa Vista", "Bom Retiro", "Do Salto",
+                                 "Ribeirão Fresco", "Vila Formosa"}
+        for light in coverage.values():
+            assert len(light["phases"]) >= 2
+            assert len({movement["incoming_road"] for movement in light["movements"]}) >= 2
         grouped = lights["GS_13081239399"]
         assert not sim.net.hasNode(grouped["id"])
         assert grouped["coordinates"] == pytest.approx([-49.059319, -26.8940652], abs=0.0002)
