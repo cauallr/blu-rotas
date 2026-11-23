@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, CarFront, Clock3, CloudRain, CloudSun, GitBranch, MapPin, MousePointer2, Pause, Play, Plus, RotateCcw, Route, Signal, SlidersHorizontal, TrafficCone, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Activity, CarFront, Clock3, CloudRain, CloudSun, Crosshair, GitBranch, MapPin, MousePointer2, Pause, Play, Plus, RotateCcw, Route, Signal, SlidersHorizontal, TrafficCone, X, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import CityMap, { type MapPoint } from './CityMap';
 import HelpTip from './HelpTip';
 import type { AccessPoint, FeatureCollection, GraphOverlay, GraphVertex, Road, RoadNetwork, RouteOption, Selection, Snapshot } from './types';
+import { toggleTracking, trackingColors, type TrackedVehicle, type TrackingSlots } from './vehicleTracking';
 
 type Act = (path: string, body?: object, reload?: boolean) => Promise<Snapshot | Record<string, unknown> | null>;
 type Props = { network: RoadNetwork; baseRoads: FeatureCollection; places: FeatureCollection;
@@ -17,6 +18,7 @@ type UrbanNetwork = { active: string | null; scenarios: { id: string; name: stri
   road_edits?: { way_id: string; direction: string; lanes_forward: number; lanes_backward: number }[];
   signals?: { node_id: string; coordinates: [number, number] }[] }[] };
 type RouteKey = RouteOption['key'];
+type TrackingState = { slots: TrackingSlots; following: boolean };
 const routeKeys: RouteKey[] = ['best', 'secondary', 'longer'];
 const duration = (seconds = 0) => `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 const clock = (hour = 0) => `${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor((hour % 1) * 60)).padStart(2, '0')}`;
@@ -64,6 +66,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
   const [showRoute, setShowRoute] = useState(true);
   const [showPreviousRoute, setShowPreviousRoute] = useState(false);
   const [followVehicle, setFollowVehicle] = useState(false);
+  const [tracking, setTracking] = useState<TrackingState | null>(null);
   const [panelMode, setPanelMode] = useState<'wide' | 'compact' | 'hidden'>('wide');
   const [routePulse, setRoutePulse] = useState<{ vehicleId: string; count: number } | null>(null);
   const lastRoute = useRef<{ vehicleId: string; count: number } | null>(null);
@@ -109,6 +112,29 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
   const running = Boolean(snapshot?.running);
   const simulationSpeed = snapshot?.speed ?? 1;
   const speedPulsing = running && chosenSpeed === simulationSpeed && snapshot?.vehicles.some(vehicle => vehicle.speed > 0);
+  const trackedVehicles: TrackedVehicle[] = tracking?.slots.flatMap((id, slot) => {
+    if (!id) return [];
+    const vehicle = snapshot?.vehicles?.find(item => item.id === id);
+    return vehicle ? [{ slot, vehicle }] : [];
+  }) || [];
+  const pickTrackedVehicle = (id: string) => {
+    setTracking(current => {
+      if (!current) return current;
+      const slots = toggleTracking(current.slots, id);
+      if (slots === current.slots) return current;
+      return { slots, following: current.following || slots.includes(id) };
+    });
+  };
+  useEffect(() => {
+    setTracking(current => {
+      if (!current) return current;
+      const [first, second] = current.slots;
+      const vehicles = snapshot?.vehicles || [];
+      const slots: TrackingSlots = [vehicles.some(car => car.id === first) ? first : null,
+        vehicles.some(car => car.id === second) ? second : null];
+      return first === slots[0] && second === slots[1] ? current : { ...current, slots };
+    });
+  }, [snapshot?.vehicles]);
   const selected = useMemo<Selection>(() => {
     if (!selection || !snapshot) return selection;
     if (selection.kind === 'vehicle') {
@@ -232,6 +258,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
     } catch (error) { setNotice((error as Error).message); }
   };
   const chooseTool = (name: string) => {
+    setTracking(null);
     if (name === 'road' && selection?.kind === 'road') setRoadSelection(selection.value);
     setTool(name);
     if (name === 'car' && !origin) setPick('origin');
@@ -402,10 +429,14 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
     <section className="map-frame">
       <CityMap network={network} baseRoads={baseRoads} places={places} snapshot={snapshot} selection={selected}
         selectedRoadId={tool === 'road' ? roadSelection?.id || null : selected?.kind === 'road' ? selected.value.id : null}
-        tool={tool} theme={theme} showRoute={showRoute} showPreviousRoute={showPreviousRoute}
+        tool={tool} theme={theme} showRoute={showRoute && !tracking} showPreviousRoute={showPreviousRoute && !tracking}
         routePulseToken={routePulse ? `${routePulse.vehicleId}-${routePulse.count}` : null}
-        followVehicleId={followVehicle && selected?.kind === 'vehicle' ? selected.value.id : null}
-        onStopFollow={() => setFollowVehicle(false)} customPoints={tool === 'car' ? points : []}
+        followVehicleId={!tracking && followVehicle && selected?.kind === 'vehicle' ? selected.value.id : null}
+        tracking={tracking ? { vehicles: trackedVehicles, following: tracking.following, onPick: pickTrackedVehicle } : null}
+        onStopFollow={() => {
+          setFollowVehicle(false);
+          setTracking(current => current?.following ? { ...current, following: false } : current);
+        }} customPoints={tool === 'car' ? points : []}
         previewRoute={tool === 'car' ? previewRoute : tool === 'vehicle' ? vehicleRouteOptions.find(option => option.key === vehiclePreviewChoice)?.route || [] : []}
         onSelect={setSelection}
         graphOverlay={graphOverlay} graphShowVertices={tool === 'graph' && graphShowVertices} graphShowArcs={tool === 'graph' && graphShowArcs}
@@ -422,7 +453,25 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
         <span className="legend yellow" /> Atenção <span className="legend mixed" /> Misto <span className="direction-key">➜</span> Sentido
         <span className="legend slow" /> Lento <span className="legend moderate" /> Moderado <span className="legend free" /> Livre
         <span className="legend blocked-road" /> Via interditada</div></div>
-      <div className="map-tip"><strong>{currentTool.label}</strong><span>{currentTool.hint}</span></div>
+      {!tracking && <div className="map-tip"><strong>{currentTool.label}</strong><span>{currentTool.hint}</span></div>}
+      {tracking && <section className="tracking-card" aria-label="Acompanhamento dos veículos">
+        <div className="tracking-card-header">
+          <strong>Tracking</strong>
+          {!!trackedVehicles.length && !tracking.following && <button type="button" onClick={() =>
+            setTracking(current => current ? { ...current, following: true } : null)}>Recentralizar</button>}
+        </div>
+        <p>{!snapshot?.vehicles?.length ? 'Gere viagens para selecionar carros no mapa.' :
+          trackedVehicles.length === 2 ? 'Clique em um carro acompanhado para removê-lo.' : 'Clique em até dois carros no mapa.'}</p>
+        {trackedVehicles.map(({ slot, vehicle }) => <div key={vehicle.id} className="tracking-vehicle">
+          <span className="tracking-number" style={{ backgroundColor: trackingColors[slot] }}>{slot + 1}</span>
+          <div className="tracking-trip">
+            <strong>{roadLabels.get(vehicle.destination) || vehicle.destination_neighborhood || 'Destino da viagem'}</strong>
+            <small>{number(vehicle.speed * 3.6)} km/h · {number(vehicle.remaining_distance_m / 1000, 1)} km restantes</small>
+          </div>
+          <button type="button" className="tracking-remove" aria-label={`Parar de acompanhar o carro ${slot + 1}`}
+            onClick={() => pickTrackedVehicle(vehicle.id)}><X size={15} /></button>
+        </div>)}
+      </section>}
       <div className="panel-map-controls"><button title={panelMode === 'hidden' ? 'Mostrar painel' : 'Ocultar painel'} onClick={() => setPanelMode(panelMode === 'hidden' ? 'wide' : 'hidden')}>{panelMode === 'hidden' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}<span>{panelMode === 'hidden' ? 'Mostrar painel' : 'Ocultar painel'}</span></button>
         {panelMode !== 'hidden' && <button title={panelMode === 'compact' ? 'Ampliar painel' : 'Diminuir painel'} onClick={() => setPanelMode(panelMode === 'compact' ? 'wide' : 'compact')}><SlidersHorizontal size={17} /><span>{panelMode === 'compact' ? 'Ampliar' : 'Diminuir'}</span></button>}</div>
       <div className="map-bottom-right">© OpenStreetMap contributors • ODbL</div>
@@ -659,7 +708,7 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
       <div className="bar-divider" /><div className="time-readout"><small>TEMPO SIMULADO</small><strong>{duration(snapshot?.sim_time)}</strong></div>
       <div className="day-readout"><small>HORA DA CIDADE</small><strong>{clock(snapshot?.clock_hour ?? chosenHour())} {snapshot?.loop?.peak && snapshot.loop.enabled ? '· PICO' : ''}</strong></div>
       <div className="bar-divider" />
-      <div className="speed-group" role="group" aria-label="Velocidade da simulação">
+      <div className="sim-controls"><div className="speed-group" role="group" aria-label="Velocidade da simulação">
         <span>VELOCIDADE</span>
         {[0.5, 1, 2, 5, 10].map(value => (
           <button key={value}
@@ -669,7 +718,13 @@ export default function CityView({ network, baseRoads, places, snapshot, chosenS
             onClick={() => act('/speed', { speed: value })}>{value}×</button>
         ))}
       </div>
-      <div className="bar-spacer" /><div className="bar-stat"><span className="stat-icon teal"><CarFront size={18} /></span><div><small>VEÍCULOS ATIVOS</small><strong>{number(snapshot?.active)}</strong></div></div>
+      <div className="tracking-control"><button type="button" className="tracking-button" aria-pressed={tracking !== null} onClick={() => {
+        if (tracking) { setTracking(null); return; }
+        setTool('select');
+        setFollowVehicle(false);
+        setTracking({ slots: [null, null], following: true });
+      }}><Crosshair size={16} /> Tracking</button></div></div>
+      <div className="bar-stat"><span className="stat-icon teal"><CarFront size={18} /></span><div><small>VEÍCULOS ATIVOS</small><strong>{number(snapshot?.active)}</strong></div></div>
       <div className="bar-stat"><span className="stat-icon amber"><Zap size={18} /></span><div><small>DESVIOS GPS</small><strong>{number(snapshot?.reroutes)}</strong></div></div></footer>
   </main>;
 }
